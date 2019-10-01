@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cronentries>
+
+    <!--<cron>-->
+        <!--<url>/refresh/firebase/from/meetup</url>-->
+        <!--<description>Update Meetup Groups</description>-->
+        <!--<schedule>every 4 hours from 07:50 to 19:50</schedule>-->
+        <!--<timezone>Europe/Rome</timezone>-->
+    <!--</cron>-->
+
+</cronentries>
+
+
+

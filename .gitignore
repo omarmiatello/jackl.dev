@@ -1,0 +1,8 @@
+# Created by .ignore support plugin (hsz.mobi)
+.idea
+.gradle
+build
+out
+*.jar
+
+src/main/kotlin/config/MyConfig.kt

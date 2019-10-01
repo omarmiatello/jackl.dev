@@ -1,0 +1,70 @@
+buildscript {
+    ext.kotlin_version = '1.3.50'
+    ext.appengine_version = '1.9.75'
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlin_version"
+        classpath "com.google.cloud.tools:appengine-gradle-plugin:2.0.1"
+    }
+}
+
+apply plugin: 'kotlin'
+apply plugin: 'kotlinx-serialization'
+apply plugin: 'war'
+apply plugin: "com.google.cloud.tools.appengine-standard"
+
+// appengine does not honor this property, so we are forced to use deep Maven tree layout
+// webAppDirName = file('webapp')
+
+sourceSets {
+    main.kotlin.srcDirs = ['src/main/kotlin']
+}
+
+repositories {
+    jcenter()
+    // maven { url "http://dl.bintray.com/kotlin/kotlin-eap" }
+    // maven { url "https://kotlin.bintray.com/ktor" }
+    maven { url "https://kotlin.bintray.com/kotlinx" }
+    maven { url "https://jitpack.io" }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.13.0"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2"
+    implementation "io.ktor:ktor-server-servlet:1.2.5"
+    implementation "io.ktor:ktor-html-builder:1.2.5"
+    implementation "com.google.cloud:google-cloud-logging-logback:0.73.0-alpha"
+    implementation "com.google.appengine:appengine-api-1.0-sdk:$appengine_version"
+    implementation "com.google.api-client:google-api-client-appengine:1.27.0"
+    // implementation "com.google.apis:google-api-services-calendar:v3-rev361-1.25.0"
+    implementation "com.google.firebase:firebase-admin:6.8.1"
+
+    // Socket needed. Do not work on App Engine
+    // https://cloud.google.com/appengine/docs/standard/java/sockets/
+    // https://cloud.google.com/solutions/using-firebase-real-time-events-app-engine
+
+    providedCompile "com.google.appengine:appengine:$appengine_version"
+}
+
+appengine {
+    tools {
+        // configure the Cloud Sdk tooling
+    }
+    run {
+        // configure local run
+    }
+    stage {
+        // configure staging for deployment
+    }
+    deploy {
+        // configure deployment
+        projectId = "cvdicv"
+        version = "GCLOUD_CONFIG"
+    }
+}
+
+task run(dependsOn: appengineRun)
