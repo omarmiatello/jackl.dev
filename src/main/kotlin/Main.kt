@@ -57,6 +57,9 @@ fun myApp(message: Message): String {
         userInput.toLowerCase() in listOf("asta", "aste", "auction", "bid", "📢") -> {
             showHouses(getHousesWithReviews().filter { it.first.action == House.ACTION_AUCTION }.ordered())
         }
+        userInput.toLowerCase() in listOf("voto", "vota", "votare") -> {
+            showHouses(getHousesWithReviews().filter { message.userName !in it.second.keys }.ordered())
+        }
         userInput.startsWith("/") -> showHouse(message, userInput.drop(1).takeWhile { it != '@' })
         houseId != null && userInput.firstOrNull()?.isDigit() ?: false -> updateComment(message, houseId)
         houseId != null && userInput.toLowerCase() == "delete" -> deleteHouse(houseId)
