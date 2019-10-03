@@ -52,8 +52,8 @@ private fun showHouse(message: Message, houseId: String): String {
         """${house.descDetails(showUrl = true)}
             |-- REVIEWS --${show("", reviews)}
             |
-            |Puoi lasciare un voto (1-10) e se vuoi a fianco un piccolo commento, es: "10 bellissima!
-            |Per eliminare la casa (e i commenti) scrivi: delete"
+            |Puoi lasciare un voto (1-10) e se vuoi a fianco un piccolo commento, es: "10 bellissima!"
+            |Per eliminare la casa (e i commenti) scrivi: delete
     """.trimMargin()
     } else {
         "Non c'è la casa $houseId"
@@ -112,7 +112,11 @@ private fun searchAndSaveHouses(message: Message): String {
     FireDB.update("house", houses.associateBy { "${it.site}_${it.id}" }, House.serializer())
 
     return if (houses.size == 1) {
-        houses.first().descDetails()
+        appEngineCacheFast[message.userName] = houses.first().let { "${it.site}_${it.id}" }
+        """${houses.first().descDetails()}
+            |
+            |Puoi lasciare un voto (1-10) e se vuoi a fianco un piccolo commento, es: "10 bellissima!"
+        """.trimMargin()
     } else {
         val housesDesc = show("\n", houses.joinToString("\n\n") { it.descShort() })
         val errorMsg = if (errors.size == 0) "" else " (${errors.size} errori)"
