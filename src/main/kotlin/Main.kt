@@ -31,7 +31,7 @@ private val Message.userName
     get() = from?.run { username ?: listOfNotNull(first_name, last_name).joinToString(" ") } ?: "unknown user"
 
 private fun List<Pair<House, Map<String, Review>>>.ordered(): List<Pair<House, Map<String, Review>>> {
-    return sortedByDescending { it.first.price }
+    return sortedBy { it.first.price }
         .sortedByDescending { it.second.map { it.value.vote }.ifEmpty { listOf(0) }.average() }
         .sortedBy { it.first.action }
 }
@@ -51,10 +51,10 @@ fun myApp(message: Message): String {
         userInput.toLowerCase() in listOf("casa", "case", "buy", "compra", "🏠", "🏡", "🏘", "🏚") -> {
             showHouses(getHousesWithReviews().filter { it.first.action == House.ACTION_BUY }.ordered())
         }
-        userInput.toLowerCase() in listOf("affitto", "affitta", "rent", "🛏") -> {
+        userInput.toLowerCase() in listOf("affitto", "affitti", "affitta", "rent", "🛏") -> {
             showHouses(getHousesWithReviews().filter { it.first.action == House.ACTION_RENT }.ordered())
         }
-        userInput.toLowerCase() in listOf("asta", "auction", "bid", "📢") -> {
+        userInput.toLowerCase() in listOf("asta", "aste", "auction", "bid", "📢") -> {
             showHouses(getHousesWithReviews().filter { it.first.action == House.ACTION_AUCTION }.ordered())
         }
         userInput.startsWith("/") -> showHouse(message, userInput.drop(1).takeWhile { it != '@' })
