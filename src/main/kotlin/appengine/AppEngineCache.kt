@@ -16,6 +16,10 @@ object LocalCache {
         cache[key] = expireInMills to value
     }
 
+    fun delete(key: String) {
+        cache.remove(key)
+    }
+
     fun clear() = cache.clear()
 }
 
@@ -32,6 +36,9 @@ class AppEngineCache(
 
     operator fun set(key: String, value: String) = memcache.put(key, value, defaultExpiration)
             .also { LocalCache[key] = value }
+
+    fun delete(key: String) = memcache.delete(key)
+        .also { LocalCache.delete(key) }
 
     inline fun getOrPut(key: String, defaultValue: () -> String) =
             get(key) ?: defaultValue().also { set(key, it) }

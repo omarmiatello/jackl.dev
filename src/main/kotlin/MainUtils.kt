@@ -6,6 +6,8 @@ import com.github.jacklt.gae.ktor.tg.appengine.telegram.User
 import kotlinx.io.PrintWriter
 import kotlinx.io.StringWriter
 import java.util.*
+import java.util.logging.Level
+import java.util.logging.Logger
 
 val Exception.stackTraceString get() = StringWriter().also { printStackTrace(PrintWriter(it)) }.toString()
 
@@ -27,6 +29,7 @@ fun Message.toAppResponse(): String {
     return try {
         myApp(this)
     } catch (e: Exception) {
+        Logger.getLogger("ok").log(Level.WARNING, "errore", e)
         "C'è stato un errore: ```\n${e.stackTraceString}\n```"
     }.ifBlank {
         "Non so cosa rispondere... 🙄"
