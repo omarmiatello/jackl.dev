@@ -115,7 +115,8 @@ private fun searchAndSaveHouses(message: Message): String {
         houses.first().descDetails()
     } else {
         val housesDesc = show("\n", houses.joinToString("\n\n") { it.descShort() })
-        """Trovate ${houses.size} case (${errors.size} errori).$housesDesc""".trimMargin()
+        val errorMsg = if (errors.size == 0) "" else " (${errors.size} errori)"
+        """Trovate ${houses.size} case$errorMsg.$housesDesc""".trimMargin()
     }
 }
 
