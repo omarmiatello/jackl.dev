@@ -30,15 +30,36 @@ private fun Elements.toIntOrDefault(default: Int) =
 private val Message.userName
     get() = from?.run { username ?: listOfNotNull(first_name, last_name).joinToString(" ") } ?: "unknown user"
 
+private fun List<Pair<House, Map<String, Review>>>.ordered(): List<Pair<House, Map<String, Review>>> {
+    return sortedByDescending { it.first.price }
+        .sortedByDescending { it.second.map { it.value.vote }.ifEmpty { listOf(0) }.average() }
+        .sortedBy { it.first.action }
+}
+
+private fun getHousesWithReviews(): List<Pair<House, Map<String, Review>>> {
+    val houses = FireDB["house", (String.serializer() to House.serializer()).map].orEmpty().values
+    val reviewsMap = FireDB["review", (String.serializer() to NAME_REVIEW_SERIALIZER).map].orEmpty()
+    val toList = houses.associateWith { reviewsMap["${it.site}_${it.id}"].orEmpty() }.toList()
+    return toList
+}
+
 fun myApp(message: Message): String {
     val userInput = message.text.orEmpty()
     val houseId = appEngineCacheFast[message.userName]
     appEngineCacheFast.delete(message.userName)
     return when {
-        userInput in listOf("casa", "case", "🏠", "🏡", "🏘", "🏚") -> showHouses()
+        userInput.toLowerCase() in listOf("casa", "case", "buy", "compra", "🏠", "🏡", "🏘", "🏚") -> {
+            showHouses(getHousesWithReviews().filter { it.first.action == House.ACTION_BUY }.ordered())
+        }
+        userInput.toLowerCase() in listOf("affitto", "affitta", "rent", "🛏") -> {
+            showHouses(getHousesWithReviews().filter { it.first.action == House.ACTION_RENT }.ordered())
+        }
+        userInput.toLowerCase() in listOf("asta", "auction", "bid", "📢") -> {
+            showHouses(getHousesWithReviews().filter { it.first.action == House.ACTION_AUCTION }.ordered())
+        }
         userInput.startsWith("/") -> showHouse(message, userInput.drop(1).takeWhile { it != '@' })
         houseId != null && userInput.firstOrNull()?.isDigit() ?: false -> updateComment(message, houseId)
-        houseId != null && userInput == "delete" -> deleteHouse(houseId)
+        houseId != null && userInput.toLowerCase() == "delete" -> deleteHouse(houseId)
         else -> searchAndSaveHouses(message)
     }
 }
@@ -72,24 +93,18 @@ private fun updateComment(message: Message, houseId: String): String {
     }
 }
 
-private fun showHouses(): String {
-    val houses = FireDB["house", (String.serializer() to House.serializer()).map].orEmpty().values
-    val reviewsMap = FireDB["review", (String.serializer() to NAME_REVIEW_SERIALIZER).map].orEmpty()
-    val houseReviews = houses.associateWith { reviewsMap["${it.site}_${it.id}"].orEmpty() }.toList()
-        .sortedByDescending { it.second.map { it.value.vote }.ifEmpty { listOf(0) }.average() }
-        .sortedBy { it.first.action }
+private fun showHouses(houseReviews: List<Pair<House, Map<String, Review>>>): String {
     return houseReviews.joinToString("\n\n") {
         val reviews = it.second.toList().joinToString("\n") { "${it.first} ${it.second}" }
         "${it.first.descShort(showTags = false)}${show("", reviews)}".trimMargin()
     }
 }
 
-fun deleteHouse(houseId: String): String {
+private fun deleteHouse(houseId: String): String {
     FireDB.delete("house/$houseId")
     FireDB.delete("review/$houseId")
     return "🏠 eliminata!"
 }
-
 
 private fun searchAndSaveHouses(message: Message): String {
     val userInput = message.text.orEmpty()
@@ -131,7 +146,6 @@ private fun String.parseHouse(): House {
         else -> error("Unknown url $this")
     }
 }
-
 
 private fun parseImmobiliare(url: String): House {
     val html = try {
@@ -217,20 +231,31 @@ data class House(
 ) {
     val priceFormatted get() = NumberFormat.getCurrencyInstance(Locale.ITALY).format(price)
 
-    fun descShort(showTags: Boolean = true) =
-        """[${action.toUpperCase()}] $title ($priceFormatted) /${site}_$id${show("Tags: ", tags.takeIf { showTags })}""".trimMargin()
+    val actionIcon
+        get() = when (action) {
+            ACTION_AUCTION -> "📢"
+            ACTION_BUY -> "🏠"
+            ACTION_RENT -> "🛏"
+            else -> "❓"
+        }
 
-    fun descDetails(showUrl: Boolean = false) = """[${action.toUpperCase()}] $title, $subtitle
+    fun descShort(showTags: Boolean = true) =
+        """$actionIcon $title
+        |$priceFormatted /${site}_$id${show("", tags.takeIf { showTags })}
+    """.trimMargin()
+
+    fun descDetails(showUrl: Boolean = false) =
+        """$actionIcon $title, $subtitle
         |Price: $priceFormatted
         |Details: ${details.orEmpty().toList().joinToString("\n") {
-        if (it.first.drop(1).all { it.isDigit() }) {
-            it.second
-        } else {
-            it.first + ": " + it.second
-        }
-    }}
-        |Images: $photos 📷, $video 📹, $planimetry_photos 🗺${show("Tags: ", tags)}${show("Url: ", url)}
+            if (it.first.drop(1).all { it.isDigit() }) {
+                it.second
+            } else {
+                it.first + ": " + it.second
+            }
+        }}
         |/${site}_$id
+        |Images: $photos 📷, $video 📹, $planimetry_photos 🗺${show("Tags: ", tags)}${show("Url: ", url)}
     """.trimMargin()
 
     companion object {
