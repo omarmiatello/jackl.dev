@@ -140,12 +140,14 @@ private fun parseImmobiliare(url: String): House {
     val priceText = html.select(".features__price > span").first().text()
     val price = immAmountRegex.find(priceText)!!.groupValues[1].filter { it.isDigit() }.toInt()
 
+    val contract = detailsMap["Contratto"].orEmpty()
+
     return House(
         site = "immobiliare",
         id = url.takeLastWhile { it.isDigit() },
-        action = when (detailsMap["Contratto"]) {
-            "Vendita" -> House.ACTION_BUY
-            "Affitto" -> House.ACTION_RENT
+        action = when {
+            contract.contains("Vendita", ignoreCase = true) -> House.ACTION_BUY
+            contract.contains("Affitto", ignoreCase = true) -> House.ACTION_RENT
             else -> House.ACTION_AUCTION
         },
         url = url,
