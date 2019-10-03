@@ -32,7 +32,7 @@ import kotlinx.serialization.serializer
 //      FireDB.delete("pathExample")
 
 object FireDB : FirebaseDatabaseApi() {
-    override val basePath = "https://gdglevante.firebaseio.com/"
+    override val basePath = "https://jutils-3f869.firebaseio.com/"
 
     var testString by fireProperty(String.serializer())
     var lastMessage by fireProperty(Message.serializer())
