@@ -18,7 +18,7 @@ class TelegramHelper(
                 val messageId = TelegramApi.sendMessage(
                     chatId = chatId,
                     text = msg,
-                    parseMode = TelegramApi.ParseMode.MARKDOWN,
+                    parseMode = TelegramApi.ParseMode.NONE, //MARKDOWN,
                     disableWebPagePreview = true
                     //button = listOf(listOf(InlineKeyboardButton("Meetup", event.meetupLink!!)))
                 ).result.message_id

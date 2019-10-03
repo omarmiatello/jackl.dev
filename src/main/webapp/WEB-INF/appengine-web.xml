@@ -5,4 +5,7 @@
     <system-properties>
         <property name="java.util.logging.config.file" value="WEB-INF/logging.properties"/>
     </system-properties>
+    <manual-scaling>
+        <instances>1</instances>
+    </manual-scaling>
 </appengine-web-app>

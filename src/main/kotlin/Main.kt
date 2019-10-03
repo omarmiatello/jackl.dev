@@ -4,6 +4,8 @@ import com.github.jacklt.gae.ktor.tg.appengine.appEngineCacheFast
 import com.github.jacklt.gae.ktor.tg.appengine.jsoupGet
 import com.github.jacklt.gae.ktor.tg.appengine.telegram.Message
 import com.github.jacklt.gae.ktor.tg.data.FireDB
+import com.github.jacklt.gae.ktor.tg.utils.TelegramHelper
+import com.google.appengine.api.ThreadManager
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.map
 import kotlinx.serialization.serializer
@@ -49,22 +51,36 @@ fun myApp(message: Message): String {
     appEngineCacheFast.delete(message.userName)
     return when {
         userInput.toLowerCase() in listOf("casa", "case", "buy", "compra", "🏠", "🏡", "🏘", "🏚") -> {
-            showHouses(getHousesWithReviews().filter { it.first.action == House.ACTION_BUY }.ordered())
+            val msgs = showHouses(getHousesWithReviews().filter { it.first.action == House.ACTION_BUY }.ordered())
+            sendTelegram(message.from!!.id.toString(), msgs.drop(1))
+            msgs.first()
         }
         userInput.toLowerCase() in listOf("affitto", "affitti", "affitta", "rent", "🛏") -> {
-            showHouses(getHousesWithReviews().filter { it.first.action == House.ACTION_RENT }.ordered())
+            val msgs = showHouses(getHousesWithReviews().filter { it.first.action == House.ACTION_RENT }.ordered())
+            sendTelegram(message.from!!.id.toString(), msgs.drop(1))
+            msgs.first()
         }
         userInput.toLowerCase() in listOf("asta", "aste", "auction", "bid", "📢") -> {
-            showHouses(getHousesWithReviews().filter { it.first.action == House.ACTION_AUCTION }.ordered())
+            val msgs = showHouses(getHousesWithReviews().filter { it.first.action == House.ACTION_AUCTION }.ordered())
+            sendTelegram(message.from!!.id.toString(), msgs.drop(1))
+            msgs.first()
         }
         userInput.toLowerCase() in listOf("voto", "vota", "votare") -> {
-            showHouses(getHousesWithReviews().filter { message.userName !in it.second.keys }.ordered())
+            val msgs = showHouses(getHousesWithReviews().filter { message.userName !in it.second.keys }.ordered())
+            sendTelegram(message.from!!.id.toString(), msgs.drop(1))
+            msgs.first()
         }
         userInput.startsWith("/") -> showHouse(message, userInput.drop(1).takeWhile { it != '@' })
         houseId != null && userInput.firstOrNull()?.isDigit() ?: false -> updateComment(message, houseId)
         houseId != null && userInput.toLowerCase() == "delete" -> deleteHouse(houseId)
         else -> searchAndSaveHouses(message)
     }
+}
+
+private fun sendTelegram(chatId: String, msgs: List<String>) {
+    ThreadManager.createBackgroundThread {
+        TelegramHelper(chatId).send(*msgs.toTypedArray())
+    }.start()
 }
 
 private fun showHouse(message: Message, houseId: String): String {
@@ -96,10 +112,12 @@ private fun updateComment(message: Message, houseId: String): String {
     }
 }
 
-private fun showHouses(houseReviews: List<Pair<House, Map<String, Review>>>): String {
-    return houseReviews.joinToString("\n\n") {
-        val reviews = it.second.toList().joinToString("\n") { "${it.first} ${it.second}" }
-        "${it.first.descShort(showTags = false)}${show("", reviews)}".trimMargin()
+private fun showHouses(houseReviews: List<Pair<House, Map<String, Review>>>): List<String> {
+    return houseReviews.chunked(15).map {
+        it.joinToString("\n\n") {
+            val reviews = it.second.toList().joinToString("\n") { "${it.first} ${it.second}" }
+            "${it.first.descShort(showTags = false)}${show("", reviews)}".trimMargin()
+        }
     }
 }
 
