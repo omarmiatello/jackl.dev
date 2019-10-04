@@ -45,7 +45,7 @@ object TelegramApi {
 
     fun deleteMessage(chatId: String, messageId: Int) = TelegramMethod.deleteMessage(chatId, messageId)
 
-    enum class ParseMode(val str: kotlin.String?) {
+    enum class ParseMode(val str: String?) {
         NONE(null),
         MARKDOWN("Markdown"),
         HTML("HTML")

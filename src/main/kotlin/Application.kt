@@ -1,5 +1,6 @@
 package com.github.jacklt.gae.ktor.tg
 
+import com.github.jacklt.gae.ktor.tg.appengine.telegram.TelegramApi
 import com.github.jacklt.gae.ktor.tg.appengine.telegram.TelegramRequest
 import com.github.jacklt.gae.ktor.tg.appengine.telegram.Update
 import com.google.gson.Gson
