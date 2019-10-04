@@ -43,6 +43,7 @@ data class House(
     val address: String? = null
 ) {
     val idDatabase get() = "${site}_${id}"
+    val idShort get() = "${if (site == "immobiliare") "imb" else "idl"}${id}"
 
     val priceFormatted get() = NumberFormat.getCurrencyInstance(Locale.ITALY).format(price)
 
@@ -56,7 +57,7 @@ data class House(
 
     fun descShort(showTags: Boolean = true) =
         """$actionIcon $title
-        |$priceFormatted /$idDatabase${show("", tags.takeIf { showTags })}
+        |$priceFormatted /$idShort${show("", tags.takeIf { showTags })}
     """.trimMargin()
 
     fun descDetails(showUrl: Boolean = false) =
@@ -69,7 +70,7 @@ data class House(
                 it.first + ": " + it.second
             }
         }}
-        |/$idDatabase
+        |/$idShort
         |Images: $photos 📷, $video 📹, $planimetry_photos 🗺${show("Tags: ", tags)}${show("Url: ", url)}
     """.trimMargin()
     companion object {

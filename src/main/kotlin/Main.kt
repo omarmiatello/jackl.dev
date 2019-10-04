@@ -44,13 +44,19 @@ fun myApp(message: Message): String {
             sendTelegram(message.from!!.id.toString(), msgs.drop(1))
             msgs.first().ifEmpty { "Hai votato tutto! 🎉" }
         }
-        userInput.startsWith("/") -> showHouse(message, userInput.drop(1).takeWhile { it != '@' })
+        userInput.startsWith("/") -> {
+            val cmd = userInput.drop(1)
+            when {
+                cmd.take(3) == "imb" -> showHouse(message, "immobiliare_" + cmd.drop(3).takeWhile { it != '@' })
+                cmd.take(3) == "idl" -> showHouse(message, "idealista_" + cmd.drop(3).takeWhile { it != '@' })
+                else -> "Comando sconosciuto"
+            }
+        }
         houseId != null && userInput.firstOrNull()?.isDigit() ?: false -> updateComment(message, houseId)
         houseId != null && userInput.toLowerCase() == "delete" -> deleteHouse(houseId)
         else -> searchAndSaveHouses(message)
     }
 }
-
 
 private fun showHouse(message: Message, houseId: String): String {
     val house = getHouse(houseId)
@@ -67,7 +73,6 @@ private fun showHouse(message: Message, houseId: String): String {
         "Non c'è la casa $houseId"
     }
 }
-
 
 private fun updateComment(message: Message, houseId: String): String {
     val house = getHouse(houseId)
@@ -124,7 +129,7 @@ private fun searchAndSaveHouses(message: Message): String {
         val housesDesc = show("\n", houses.joinToString("\n\n") { it.descShort() })
         val errorMsg = if (errors.size == 0) "" else " (${errors.size} errori)"
         if (houses.isEmpty() && errorMsg.isEmpty()) {
-            "Puoi passarmi uno o più link di immobiliare.it/idelista.it o scrivere `case`, `affitto`, `asta`, `vota`"
+            "Puoi passarmi uno o più link di Immobiliare/Idelista o scrivere: case, affitto, asta, vota"
         } else {
             """Trovate ${houses.size} case$errorMsg.$housesDesc""".trimMargin()
         }
