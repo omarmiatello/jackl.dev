@@ -26,23 +26,23 @@ fun myApp(message: Message): String {
     return when {
         userInput.toLowerCase() in listOf("casa", "case", "buy", "compra", "🏠", "🏡", "🏘", "🏚") -> {
             val msgs = getHousesWithReviewsStrings { it.first.action == House.ACTION_BUY }
-            sendTelegram(message.from!!.id.toString(), msgs.drop(1))
-            msgs.first().ifEmpty { "Non ci sono case" }
+            sendTelegram(message.chat.id.toString(), msgs.dropLast(1))
+            msgs.last().ifEmpty { "Non ci sono case" }
         }
         userInput.toLowerCase() in listOf("affitto", "affitti", "affitta", "rent", "🛏") -> {
             val msgs = getHousesWithReviewsStrings { it.first.action == House.ACTION_RENT }
-            sendTelegram(message.from!!.id.toString(), msgs.drop(1))
-            msgs.first().ifEmpty { "Non ci sono affitti" }
+            sendTelegram(message.chat.id.toString(), msgs.dropLast(1))
+            msgs.last().ifEmpty { "Non ci sono affitti" }
         }
         userInput.toLowerCase() in listOf("asta", "aste", "auction", "bid", "📢") -> {
             val msgs = getHousesWithReviewsStrings { it.first.action == House.ACTION_AUCTION }
-            sendTelegram(message.from!!.id.toString(), msgs.drop(1))
-            msgs.first().ifEmpty { "Non ci sono aste" }
+            sendTelegram(message.chat.id.toString(), msgs.dropLast(1))
+            msgs.last().ifEmpty { "Non ci sono aste" }
         }
         userInput.toLowerCase() in listOf("voto", "vota", "votare") -> {
             val msgs = getHousesWithReviewsStrings { message.getUserName() !in it.second.keys }
-            sendTelegram(message.from!!.id.toString(), msgs.drop(1))
-            msgs.first().ifEmpty { "Hai votato tutto! 🎉" }
+            sendTelegram(message.chat.id.toString(), msgs.dropLast(1))
+            msgs.last().ifEmpty { "Hai votato tutto! 🎉" }
         }
         userInput.startsWith("/") -> {
             val cmd = userInput.drop(1)
@@ -82,13 +82,15 @@ private fun updateComment(message: Message, houseId: String): String {
         if (userInput.all { it.isDigit() }) {
             saveReviewVote(houseId, userName, userInput.toInt())
         } else {
-            val review = Review(userInput.takeWhile { it.isDigit() }.toInt(), userInput.dropWhile { it.isDigit() }.drop(1))
-            saveReview(houseId, userName, review)
+            saveReview(houseId, userName, Review(
+                vote = userInput.takeWhile { it.isDigit() }.toInt(),
+                commment = userInput.dropWhile { it.isDigit() }.drop(1)
+            ))
         }
 
         val reviewsMap = getReviewsByHouse(houseId)
         """${house.descShort()}
-        |REVIEWS${reviewsMap.showReviews()}
+        |REVIEWS${show("", reviewsMap.showReviews())}
         """.trimMargin()
     } else {
         "Non c'è la casa $houseId"
@@ -138,9 +140,7 @@ private fun searchAndSaveHouses(message: Message): String {
 
 private fun sendTelegram(chatId: String, msgs: List<String>) {
     if (msgs.isNotEmpty()) {
-        ThreadManager.createBackgroundThread {
-            TelegramHelper(chatId).send(*msgs.toTypedArray())
-        }.start()
+        TelegramHelper(chatId).send(*msgs.toTypedArray())
     }
 }
 

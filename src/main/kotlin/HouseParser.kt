@@ -13,7 +13,7 @@ private val immAmountRegex = ".*?€ ([\\d.]+).*".toRegex()
 private val ideAmountRegex = ".*?([\\d.]+) €.*".toRegex()
 
 @Serializable
-data class Review(val vote: Int, val commment: String?) {
+data class Review(val vote: Int, val commment: String? = null) {
     val voteToEmoji get() = when (vote) {
         in 0..5 -> "😡"
         6 -> "🧐"
@@ -22,7 +22,7 @@ data class Review(val vote: Int, val commment: String?) {
         9 -> "😍"
         else -> "🤯"
     }
-    override fun toString() = "$voteToEmoji: $commment"
+    override fun toString() = if (commment == null) voteToEmoji else "$voteToEmoji: $commment"
 }
 
 @Serializable
