@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 import org.jsoup.select.Elements
 import java.text.NumberFormat
 import java.util.*
+import kotlin.math.absoluteValue
 
 
 private val immUrlRegex = "(https://www\\.immobiliare\\.it/annunci/\\d+)/?.*?".toRegex()
@@ -12,9 +13,8 @@ private val ideUrlRegex = "(https://www\\.idealista\\.it/immobile/\\d+)/?.*?".to
 private val immAmountRegex = ".*?€ ([\\d.]+).*".toRegex()
 private val ideAmountRegex = ".*?([\\d.]+) €.*".toRegex()
 
-@Serializable
-data class Review(val vote: Int, val commment: String? = null) {
-    val voteToEmoji get() = when (vote) {
+private val Map<String, Review>.icon
+    get() = when (map { it.value.vote }.average().toInt()) {
         in 0..5 -> "😡"
         6 -> "🧐"
         7 -> "🙂"
@@ -22,7 +22,20 @@ data class Review(val vote: Int, val commment: String? = null) {
         9 -> "😍"
         else -> "🤯"
     }
-    override fun toString() = if (commment == null) voteToEmoji else "$voteToEmoji: $commment"
+
+private fun Elements.toIntOrDefault(default: Int) =
+    firstOrNull()?.let { it.text().filter { it.isDigit() }.toIntOrNull() } ?: default
+
+private fun Map<String, Review>.showReviews(): String {
+    return toList().joinToString("\n") {
+        val emoji = emojiAnimals[it.first.hashCode().absoluteValue % emojiAnimals.size]
+        "${emoji}${it.second}"
+    }
+}
+
+@Serializable
+data class Review(val vote: Int, val commment: String? = null) {
+    override fun toString() = if (commment == null) "$vote" else "$vote: $commment"
 }
 
 @Serializable
@@ -55,13 +68,13 @@ data class House(
             else -> "❓"
         }
 
-    fun descShort(showTags: Boolean = true) =
-        """$actionIcon $title
-        |$priceFormatted /$idShort${show("", tags.takeIf { showTags })}
+    fun descShort(reviewsMap: Map<String, Review>? = null, showTags: Boolean = true) =
+        """$actionIcon${reviewsMap?.icon ?: ""} $title
+        |$priceFormatted /$idShort${show("", tags.takeIf { showTags })}${show("", reviewsMap?.showReviews())}
     """.trimMargin()
 
-    fun descDetails(showUrl: Boolean = false) =
-        """$actionIcon $title, $subtitle
+    fun descDetails(reviewsMap: Map<String, Review>) =
+        """$actionIcon${reviewsMap.icon} $title, $subtitle
         |Price: $priceFormatted
         |Details: ${details.toList().joinToString("\n") {
             if (it.first.drop(1).all { it.isDigit() }) {
@@ -72,6 +85,10 @@ data class House(
         }}
         |/$idShort
         |Images: $photos 📷, $video 📹, $planimetry_photos 🗺${show("Tags: ", tags)}${show("Url: ", url)}
+        |REVIEWS${show("", reviewsMap.showReviews())}
+        |
+        |- per votare: scrivi un voto (1-10) e un commento, es: "10 bellissima!"
+        |- Per eliminare la casa: ´delete´
     """.trimMargin()
     companion object {
         const val ACTION_AUCTION = "auction"
@@ -87,9 +104,6 @@ fun String.parseHouse(): House {
         else -> error("Unknown url $this")
     }
 }
-
-private fun Elements.toIntOrDefault(default: Int) =
-    firstOrNull()?.let { it.text().filter { it.isDigit() }.toIntOrNull() } ?: default
 
 private fun parseImmobiliare(url: String): House {
     val html = try {

@@ -4,12 +4,10 @@ import com.github.jacklt.gae.ktor.tg.appengine.appEngineCacheFast
 import com.github.jacklt.gae.ktor.tg.appengine.telegram.Message
 import com.github.jacklt.gae.ktor.tg.data.FireDB
 import com.github.jacklt.gae.ktor.tg.utils.TelegramHelper
-import com.google.appengine.api.ThreadManager
 import kotlinx.serialization.map
 import kotlinx.serialization.serializer
 import java.util.logging.Level
 import java.util.logging.Logger
-import kotlin.math.absoluteValue
 
 fun main() = startApp()
 
@@ -27,22 +25,22 @@ fun myApp(message: Message): String {
         userInput.toLowerCase() in listOf("casa", "case", "buy", "compra", "🏠", "🏡", "🏘", "🏚") -> {
             val msgs = getHousesWithReviewsStrings { it.first.action == House.ACTION_BUY }
             sendTelegram(message.chat.id.toString(), msgs.dropLast(1))
-            msgs.last().ifEmpty { "Non ci sono case" }
+            if (msgs.isEmpty()) "Non ci sono case" else msgs.last()
         }
         userInput.toLowerCase() in listOf("affitto", "affitti", "affitta", "rent", "🛏") -> {
             val msgs = getHousesWithReviewsStrings { it.first.action == House.ACTION_RENT }
             sendTelegram(message.chat.id.toString(), msgs.dropLast(1))
-            msgs.last().ifEmpty { "Non ci sono affitti" }
+            if (msgs.isEmpty()) "Non ci sono affitti" else msgs.last()
         }
         userInput.toLowerCase() in listOf("asta", "aste", "auction", "bid", "📢") -> {
             val msgs = getHousesWithReviewsStrings { it.first.action == House.ACTION_AUCTION }
             sendTelegram(message.chat.id.toString(), msgs.dropLast(1))
-            msgs.last().ifEmpty { "Non ci sono aste" }
+            if (msgs.isEmpty()) "Non ci sono aste" else msgs.last()
         }
         userInput.toLowerCase() in listOf("voto", "vota", "votare") -> {
             val msgs = getHousesWithReviewsStrings { message.getUserName() !in it.second.keys }
             sendTelegram(message.chat.id.toString(), msgs.dropLast(1))
-            msgs.last().ifEmpty { "Hai votato tutto! 🎉" }
+            if (msgs.isEmpty()) "Hai votato tutto! 🎉" else msgs.last()
         }
         userInput.startsWith("/") -> {
             val cmd = userInput.drop(1)
@@ -63,12 +61,7 @@ private fun showHouse(message: Message, houseId: String): String {
     return if (house != null) {
         appEngineCacheFast[message.getUserName()] = houseId
         val reviewsMap = getReviewsByHouse(houseId)
-        """${house.descDetails(showUrl = true)}
-            |REVIEWS${show("", reviewsMap.showReviews())}
-            |
-            |- per votare: scrivi un voto (1-10) e un commento, es: "10 bellissima!"
-            |- Per eliminare la casa: ´delete´
-    """.trimMargin()
+        house.descDetails(reviewsMap)
     } else {
         "Non c'è la casa $houseId"
     }
@@ -82,16 +75,25 @@ private fun updateComment(message: Message, houseId: String): String {
         if (userInput.all { it.isDigit() }) {
             saveReviewVote(houseId, userName, userInput.toInt())
         } else {
-            saveReview(houseId, userName, Review(
-                vote = userInput.takeWhile { it.isDigit() }.toInt(),
-                commment = userInput.dropWhile { it.isDigit() }.drop(1)
-            ))
+            saveReview(
+                houseId, userName, Review(
+                    vote = userInput.takeWhile { it.isDigit() }.toInt(),
+                    commment = userInput.dropWhile { it.isDigit() }.drop(1)
+                )
+            )
         }
 
         val reviewsMap = getReviewsByHouse(houseId)
-        """${house.descShort()}
-        |REVIEWS${show("", reviewsMap.showReviews())}
-        """.trimMargin()
+        val houseNeedReview = getHousesWithReviews()
+            .sorted()
+            .firstOrNull { message.getUserName() !in it.second.keys }
+            ?.first
+        val nextReview = if (houseNeedReview == null) {
+            "Hai votato tutto! 🎉"
+        } else {
+            "Prossima review: /${houseNeedReview.idShort}"
+        }
+        "${house.descShort(reviewsMap)}\n$nextReview"
     } else {
         "Non c'è la casa $houseId"
     }
@@ -121,12 +123,7 @@ private fun searchAndSaveHouses(message: Message): String {
         val house = houses.first()
         appEngineCacheFast[message.getUserName()] = house.let { it.idDatabase }
         val reviewsMap = getReviewsByHouse(house.idDatabase)
-        """${house.descDetails()}
-            |REVIEWS${show("", reviewsMap.showReviews())}
-            |
-            |- per votare: scrivi un voto (1-10) e un commento, es: "10 bellissima!"
-            |- Per eliminare la casa: ´delete´
-        """.trimMargin()
+        house.descDetails(reviewsMap)
     } else {
         val housesDesc = show("\n", houses.joinToString("\n\n") { it.descShort() })
         val errorMsg = if (errors.size == 0) "" else " (${errors.size} errori)"
@@ -175,11 +172,6 @@ private fun getReviewsByHouse(houseId: String) = FireDB["review/$houseId", NAME_
 
 private fun getReviewsMap() = FireDB["review", (String.serializer() to NAME_REVIEW_SERIALIZER).map].orEmpty()
 
-private fun Map<String, Review>.showReviews() =
-    toList().joinToString("\n") { "${it.first} ${it.second}" }
-
-private fun Map<String, Review>.showReviewsEmoji() =
-    toList().joinToString("") { it.second.voteToEmoji }
 
 // Houses with Reviews utils
 
@@ -198,11 +190,7 @@ private fun List<Pair<House, Map<String, Review>>>.toStringList(): List<String> 
     return chunked(15).map {
         it.joinToString("\n\n") {
             val reviewsMap = it.second
-            val reviews = reviewsMap.toList().joinToString("\n") {
-                val emoji = emojiAnimals[it.first.hashCode().absoluteValue % emojiAnimals.size]
-                "$emoji${it.second}"
-            }
-            "${it.first.descShort(showTags = false)}${show("", reviews)}".trimMargin()
+            it.first.descShort(reviewsMap, showTags = false)
         }
     }
 }
