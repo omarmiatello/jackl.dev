@@ -38,7 +38,7 @@ data class Review(val vote: Int, val commment: String? = null) {
     override fun toString() = if (commment == null) "$vote" else "$vote: $commment"
 }
 
-@Serializable
+@Serializable()
 data class House(
     val site: String,
     val id: String,
@@ -53,7 +53,8 @@ data class House(
     val planimetry_photos: Int,
     val video: Int,
     val photos: Int,
-    val address: String? = null
+    val address: String? = null,
+    val visited: Boolean = false
 ) {
     val idDatabase get() = "${site}_${id}"
     val idShort get() = "${if (site == "immobiliare") "imb" else "idl"}${id}"
@@ -68,13 +69,17 @@ data class House(
             else -> "❓"
         }
 
+    val visitedIcon
+        get() = if (visited) "👀" else ""
+
+
     fun descShort(reviewsMap: Map<String, Review>? = null, showTags: Boolean = true) =
-        """$actionIcon${reviewsMap?.icon ?: ""} $title
+        """$actionIcon${reviewsMap?.icon ?: ""}$visitedIcon $title $url
         |$priceFormatted /$idShort${show("", tags.takeIf { showTags })}${show("", reviewsMap?.showReviews())}
     """.trimMargin()
 
     fun descDetails(reviewsMap: Map<String, Review>) =
-        """$actionIcon${reviewsMap.icon} $title, $subtitle
+        """$actionIcon${reviewsMap.icon}$visitedIcon $title, $subtitle
         |Price: $priceFormatted
         |Details: ${details.toList().joinToString("\n") {
             if (it.first.drop(1).all { it.isDigit() }) {
@@ -88,7 +93,8 @@ data class House(
         |REVIEWS${show("", reviewsMap.showReviews())}
         |
         |- per votare: scrivi un voto (1-10) e un commento, es: "10 bellissima!"
-        |- Per eliminare la casa: ´delete´
+        |- Per eliminare la casa: /delete
+        |- Aggiorna ${if (visited) "/davedere" else "/visto"}
     """.trimMargin()
     companion object {
         const val ACTION_AUCTION = "auction"

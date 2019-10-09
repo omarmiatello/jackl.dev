@@ -47,14 +47,20 @@ fun myApp(message: Message): String {
             when {
                 cmd.take(3) == "imb" -> showHouse(message, "immobiliare_" + cmd.drop(3).takeWhile { it != '@' })
                 cmd.take(3) == "idl" -> showHouse(message, "idealista_" + cmd.drop(3).takeWhile { it != '@' })
+                houseId != null -> when (cmd) {
+                    "visto" -> visitedHouse(houseId, true)
+                    "davedere" -> visitedHouse(houseId, false)
+                    "delete" -> deleteHouse(houseId)
+                    else -> "Comando sconosciuto"
+                }
                 else -> "Comando sconosciuto"
             }
         }
         houseId != null && userInput.firstOrNull()?.isDigit() ?: false -> updateComment(message, houseId)
-        houseId != null && userInput.toLowerCase() == "delete" -> deleteHouse(houseId)
         else -> searchAndSaveHouses(message)
     }
 }
+
 
 private fun showHouse(message: Message, houseId: String): String {
     val house = getHouse(houseId)
@@ -156,6 +162,11 @@ private fun deleteHouse(houseId: String): String {
     FireDB.delete("house/$houseId")
     FireDB.delete("review/$houseId")
     return "🏠 eliminata!"
+}
+
+fun visitedHouse(houseId: String, visited: Boolean): String {
+    FireDB["house/$houseId/visited", Boolean.serializer()] = visited
+    return "🏠 ${if (visited) "vista" else "da vedere"}!"
 }
 
 // Reviews utils
