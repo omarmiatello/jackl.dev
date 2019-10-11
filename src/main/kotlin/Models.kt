@@ -33,6 +33,13 @@ private fun Map<String, Review>.showReviews(): String {
     }
 }
 
+private fun Map<String, Review>.showReviewsShort(): String {
+    return toList().joinToString("\n") {
+        val emoji = emojiAnimals[it.first.hashCode().absoluteValue % emojiAnimals.size]
+        "${emoji}${it.second.toString().lines().first()}"
+    }
+}
+
 @Serializable
 data class Review(val vote: Int, val commment: String? = null) {
     override fun toString() = if (commment == null) "$vote" else "$vote: $commment"
@@ -75,7 +82,7 @@ data class House(
 
     fun descShort(reviewsMap: Map<String, Review>? = null, showTags: Boolean = true) =
         """$actionIcon${reviewsMap?.icon ?: ""}$visitedIcon $title $url
-        |$priceFormatted /$idShort${show("", tags.takeIf { showTags })}${show("", reviewsMap?.showReviews())}
+        |$priceFormatted /$idShort${show("", tags.takeIf { showTags })}${show("", reviewsMap?.showReviewsShort())}
     """.trimMargin()
 
     fun descDetails(reviewsMap: Map<String, Review>) =
