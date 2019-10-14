@@ -15,7 +15,8 @@ private val ideAmountRegex = ".*?([\\d.]+) €.*".toRegex()
 
 private val Map<String, Review>.icon
     get() = when (map { it.value.vote }.average().toInt()) {
-        in 0..5 -> "😡"
+        0 -> ""
+        in 1..5 -> "😡"
         6 -> "🧐"
         7 -> "🙂"
         8 -> "😄"
