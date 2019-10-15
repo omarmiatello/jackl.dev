@@ -4,6 +4,9 @@ import com.github.jacklt.gae.ktor.tg.appengine.appEngineCacheFast
 import com.github.jacklt.gae.ktor.tg.appengine.telegram.Message
 import com.github.jacklt.gae.ktor.tg.data.FireDB
 import com.github.jacklt.gae.ktor.tg.utils.TelegramHelper
+import com.github.jacklt.gae.ktor.tg.utils.json
+import kotlinx.serialization.json.content
+import kotlinx.serialization.list
 import kotlinx.serialization.map
 import kotlinx.serialization.serializer
 import java.util.logging.Level
@@ -147,6 +150,16 @@ private fun sendTelegram(chatId: String, msgs: List<String>) {
     }
 }
 
+fun getFullJson(): String {
+    val all = getHousesWithReviews().map { (house, votes) ->
+        val jsonObject = json.toJson(House.serializer(), house).jsonObject
+        (jsonObject - "details").mapValues { it.value.content } +
+                jsonObject["details"]?.jsonObject.orEmpty().mapValues { it.value.content } +
+                votes.map { it.key to it.value.toString() }.toMap()
+    }.toList()
+    return json.stringify((String.serializer() to String.serializer()).map.list, all)
+
+}
 
 // Houses utils
 

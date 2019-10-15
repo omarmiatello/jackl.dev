@@ -1,6 +1,5 @@
 package com.github.jacklt.gae.ktor.tg
 
-import com.github.jacklt.gae.ktor.tg.appengine.telegram.TelegramApi
 import com.github.jacklt.gae.ktor.tg.appengine.telegram.TelegramRequest
 import com.github.jacklt.gae.ktor.tg.appengine.telegram.Update
 import com.google.gson.Gson
@@ -15,6 +14,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.request.receiveText
 import io.ktor.response.respond
 import io.ktor.response.respondText
+import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.route
 import io.ktor.routing.routing
@@ -69,6 +69,10 @@ fun Application.main() {
 
                 if (call.response.status() == null) call.respond(HttpStatusCode.NoContent)
             }
+        }
+
+        get("houses") {
+            call.respondText(getFullJson())
         }
     }
 }
