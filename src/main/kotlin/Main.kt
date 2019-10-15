@@ -150,15 +150,28 @@ private fun sendTelegram(chatId: String, msgs: List<String>) {
     }
 }
 
-fun getFullJson(): String {
-    val all = getHousesWithReviews().map { (house, votes) ->
+fun getFullJson(predicate: (Pair<House, Map<String, Review>>) -> Boolean): String {
+    val sortedList = getHousesWithReviews().filter(predicate).sorted()
+    val results = sortedList.map { (house, votes) ->
         val jsonObject = json.toJson(House.serializer(), house).jsonObject
-        (jsonObject - "details").mapValues { it.value.content } +
-                jsonObject["details"]?.jsonObject.orEmpty().mapValues { it.value.content } +
-                votes.map { it.key to it.value.toString() }.toMap()
-    }.toList()
-    return json.stringify((String.serializer() to String.serializer()).map.list, all)
+        val details = jsonObject["details"]?.jsonObject.orEmpty()
 
+        val nickEmptyMap = sortedList.flatMap { it.second.keys }.distinct().map { it to "" }.toMap()
+        val detailsEmptyMap = sortedList.flatMap {
+            val keys = it.first.details.keys
+            if ("d0" in keys) emptySet() else keys
+        }.distinct().map { it to "" }.toMap()
+        val votesMap = votes.map { it.key to it.value.toString() }.toMap()
+        val detailsMap = if (details.containsKey("d0")) {
+            mapOf("details" to details.values.map { it.content }.joinToString())
+        } else {
+            details.mapValues { it.value.content }
+        }
+        val objectMap = (jsonObject - "details").mapValues { it.value.content }
+
+        nickEmptyMap + detailsEmptyMap + votesMap + detailsMap + objectMap
+    }.toList()
+    return json.stringify((String.serializer() to String.serializer()).map.list, results)
 }
 
 // Houses utils

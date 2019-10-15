@@ -71,8 +71,15 @@ fun Application.main() {
             }
         }
 
-        get("houses") {
-            call.respondText(getFullJson())
+        get("buy") {
+            call.respondText(getFullJson { it.first.action == House.ACTION_BUY })
         }
+        get("rent") {
+            call.respondText(getFullJson { it.first.action == House.ACTION_RENT })
+        }
+        get("auction") {
+            call.respondText(getFullJson { it.first.action == House.ACTION_AUCTION })
+        }
+
     }
 }
