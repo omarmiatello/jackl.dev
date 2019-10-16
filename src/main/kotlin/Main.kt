@@ -151,8 +151,9 @@ private fun sendTelegram(chatId: String, msgs: List<String>) {
 }
 
 fun getFullJson(predicate: (Pair<House, Map<String, Review>>) -> Boolean): String {
-    val sortedList = getHousesWithReviews().filter(predicate).sorted()
-    val nickEmptyMap = sortedList.flatMap { it.second.keys }.distinct().map { it to "" }.toMap()
+    val housesWithReviews = getHousesWithReviews()
+    val sortedList = housesWithReviews.filter(predicate).sorted()
+    val nickEmptyMap = housesWithReviews.flatMap { it.second.keys }.distinct().map { it to "" }.toMap()
     val detailsEmptyMap = sortedList.flatMap {
         val keys = it.first.details.keys
         if ("d0" in keys) emptySet() else keys
