@@ -80,14 +80,16 @@ data class House(
     val visitedIcon
         get() = if (visited) "👀" else ""
 
+    fun icons(reviewsMap: Map<String, Review>?) =
+        """$actionIcon${reviewsMap?.icon ?: ""}$visitedIcon"""
 
     fun descShort(reviewsMap: Map<String, Review>? = null, showTags: Boolean = true) =
-        """$actionIcon${reviewsMap?.icon ?: ""}$visitedIcon $title $url
+        """${icons(reviewsMap)} $title $url
         |$priceFormatted /$idShort${show("", tags.takeIf { showTags })}${show("", reviewsMap?.showReviewsShort())}
     """.trimMargin()
 
     fun descDetails(reviewsMap: Map<String, Review>) =
-        """$actionIcon${reviewsMap.icon}$visitedIcon $title, $subtitle
+        """${icons(reviewsMap)} $title, $subtitle
         |Price: $priceFormatted
         |Details: ${details.toList().joinToString("\n") {
             if (it.first.drop(1).all { it.isDigit() }) {

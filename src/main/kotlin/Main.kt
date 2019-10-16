@@ -162,6 +162,7 @@ fun getFullJson(predicate: (Pair<House, Map<String, Review>>) -> Boolean): Strin
     val results = sortedList.map { (house, votes) ->
         val houseJsonObj = json.toJson(House.serializer(), house).jsonObject
         val details = houseJsonObj["details"]?.jsonObject.orEmpty()
+        val icons = mapOf("🔥" to house.icons(votes))
         val votesMap = votes.map { it.key to it.value.toString() }.toMap()
         val detailsMap = if (details.containsKey("d0")) {
             mapOf("details" to details.values.joinToString { it.content })
@@ -170,7 +171,7 @@ fun getFullJson(predicate: (Pair<House, Map<String, Review>>) -> Boolean): Strin
         }
         val objectMap = (houseJsonObj - "details").mapValues { it.value.content }
 
-        nickEmptyMap + detailsEmptyMap + votesMap + detailsMap + objectMap
+        icons + nickEmptyMap + detailsEmptyMap + votesMap + detailsMap + objectMap
     }.toList()
     return json.stringify((String.serializer() to String.serializer()).map.list, results)
 }
