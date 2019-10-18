@@ -45,6 +45,9 @@ fun myApp(message: Message): String {
             sendTelegram(message.chat.id.toString(), msgs.dropLast(1))
             if (msgs.isEmpty()) "Hai votato tutto! 🎉" else msgs.last()
         }
+        userInput.toLowerCase() in listOf("ss", "spreadsheet", "docs", "doc") -> {
+            "https://docs.google.com/spreadsheets/d/10VolNdRjvS376p0AsYu3VIFdpnN3bNbeYe02ulX6du4/edit?usp=sharing"
+        }
         userInput.startsWith("/") -> {
             val cmd = userInput.drop(1)
             when {
@@ -137,7 +140,7 @@ private fun searchAndSaveHouses(message: Message): String {
         val housesDesc = show("\n", houses.joinToString("\n\n") { it.descShort() })
         val errorMsg = if (errors.size == 0) "" else " (${errors.size} errori)"
         if (houses.isEmpty() && errorMsg.isEmpty()) {
-            "Puoi passarmi uno o più link di Immobiliare/Idelista o scrivere: case, affitto, asta, vota"
+            "Puoi passarmi uno o più link di Immobiliare/Idelista o scrivere: case, affitto, asta, vota, doc"
         } else {
             """Trovate ${houses.size} case$errorMsg.$housesDesc""".trimMargin()
         }
