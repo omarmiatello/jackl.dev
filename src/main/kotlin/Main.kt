@@ -229,7 +229,7 @@ private fun List<Pair<House, Map<String, Review>>>.sorted(): List<Pair<House, Ma
 }
 
 private fun List<Pair<House, Map<String, Review>>>.toStringList(): List<String> {
-    return chunked(15).map {
+    return chunked(10).map {
         it.joinToString("\n\n") {
             val reviewsMap = it.second
             it.first.descShort(reviewsMap, showTags = false)
