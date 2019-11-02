@@ -67,7 +67,16 @@ data class House(
     val idDatabase get() = "${site}_${id}"
     val idShort get() = "${if (site == "immobiliare") "imb" else "idl"}${id}"
 
-    val priceFormatted get() = NumberFormat.getCurrencyInstance(Locale.ITALY).format(price)
+    val priceFormatted get() = NumberFormat.getCurrencyInstance(Locale.GERMANY).apply { minimumFractionDigits = 0 }.format(price)
+
+    val surfaceSize: Int
+        get() = (details.getOrElse("Superficie") { null } ?: details.values.firstOrNull { " m²" in it })!!
+            .takeWhile { it.isDigit() }.toInt()
+
+    val surfaceFormatted get() = "${surfaceSize}m²"
+
+    val priceMeter2Formatted
+        get() = NumberFormat.getCurrencyInstance(Locale.GERMANY).apply { minimumFractionDigits = 0 }.format(price / surfaceSize) + "/m²"
 
     val actionIcon
         get() = when (action) {
@@ -85,12 +94,15 @@ data class House(
 
     fun descShort(reviewsMap: Map<String, Review>? = null, showTags: Boolean = true) =
         """${icons(reviewsMap)} $title $url
-        |$priceFormatted /$idShort${show("", tags.takeIf { showTags })}${show("", reviewsMap?.showReviewsShort())}
+        |$priceFormatted / $surfaceFormatted ($priceMeter2Formatted) /$idShort${show("", tags.takeIf { showTags })}${show(
+            "",
+            reviewsMap?.showReviewsShort()
+        )}
     """.trimMargin()
 
     fun descDetails(reviewsMap: Map<String, Review>) =
         """${icons(reviewsMap)} $title, $subtitle
-        |Price: $priceFormatted
+        |Price: $priceFormatted / $surfaceFormatted ($priceMeter2Formatted)
         |Details: ${details.toList().joinToString("\n") {
             if (it.first.drop(1).all { it.isDigit() }) {
                 it.second
@@ -106,6 +118,7 @@ data class House(
         |- Per eliminare la casa: /delete
         |- Aggiorna ${if (visited) "/davedere" else "/visto"}
     """.trimMargin()
+
     companion object {
         const val ACTION_AUCTION = "auction"
         const val ACTION_BUY = "buy"

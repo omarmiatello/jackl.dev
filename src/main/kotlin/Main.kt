@@ -25,6 +25,12 @@ fun myApp(message: Message): String {
     val houseId = appEngineCacheFast[message.getUserName()]
     appEngineCacheFast.delete(message.getUserName())
     return when {
+        "cas[ae] \\d+".toRegex().matches(userInput.toLowerCase()) -> {
+            val max: Int =  "cas[ae] (\\d+)".toRegex().matchEntire(userInput.toLowerCase())!!.groupValues[1].toInt()
+            val msgs = getHousesWithReviewsStrings { it.first.action == House.ACTION_BUY && it.first.price <= max * 1000 }
+            sendTelegram(message.chat.id.toString(), msgs.dropLast(1))
+            if (msgs.isEmpty()) "Non ci sono case" else msgs.last()
+        }
         userInput.toLowerCase() in listOf("casa", "case", "buy", "compra", "🏠", "🏡", "🏘", "🏚") -> {
             val msgs = getHousesWithReviewsStrings { it.first.action == House.ACTION_BUY }
             sendTelegram(message.chat.id.toString(), msgs.dropLast(1))
