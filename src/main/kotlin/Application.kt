@@ -1,8 +1,13 @@
 package com.github.jacklt.gae.ktor.tg
 
+import com.github.jacklt.gae.ktor.tg.appengine.telegram.TelegramApi
 import com.github.jacklt.gae.ktor.tg.appengine.telegram.TelegramRequest
 import com.github.jacklt.gae.ktor.tg.appengine.telegram.Update
+import com.github.jacklt.gae.ktor.tg.config.MyConfig
+import com.github.jacklt.gae.ktor.tg.feature.home.NoExpDB
+import com.github.jacklt.gae.ktor.tg.utils.TelegramHelper
 import com.google.gson.Gson
+import feature.home.Product
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -19,6 +24,7 @@ import io.ktor.routing.post
 import io.ktor.routing.route
 import io.ktor.routing.routing
 import kotlinx.serialization.json.Json
+import java.util.concurrent.TimeUnit
 
 /**
  * Entry Point of the application. This function is referenced in the
@@ -80,6 +86,33 @@ fun Application.main() {
         get("auction") {
             call.respondText(getFullJson { it.first.action == House.ACTION_AUCTION })
         }
+        get("feature/home/expire") {
 
+            fun List<Product>.show(maxProd: Int, desc: String) = if (isEmpty()) "" else """$size prodotti $desc:
+${take(maxProd).joinToString("\n")}
+
+"""
+            val now = System.currentTimeMillis()
+            val fullList = NoExpDB.home.values.sortedBy { it.expireDate }
+            val expiredList = fullList.takeWhile { it.expireDate < now}
+            val expiredListNot = fullList.drop(expiredList.size)
+            val weekEnd = now + TimeUnit.DAYS.toMillis(7)
+            val weekList = expiredListNot.takeWhile { it.expireDate < weekEnd }
+            val weekListNot = expiredListNot.drop(weekList.size)
+            val monthEnd = now + TimeUnit.DAYS.toMillis(30)
+            val monthList = weekListNot.takeWhile { it.expireDate < monthEnd }
+            val monthListNot = weekListNot.drop(monthList.size)
+
+
+            val msg = """Ci sono ${fullList.size} prodotti
+${expiredList.show(5, "scaduti")}${weekList.show(10, "entro 7 giorni")}${monthList.show(
+                10,
+                "entro 30 giorni"
+            )}${monthListNot.show(10, "oltre 1 mese")}
+"""
+
+            TelegramApi.sendMessage(MyConfig.chat_case, msg, TelegramApi.ParseMode.HTML)
+            call.respondText(msg)
+        }
     }
 }

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <cronentries>
 
-    <!--<cron>-->
-        <!--<url>/refresh/firebase/from/meetup</url>-->
-        <!--<description>Update Meetup Groups</description>-->
-        <!--<schedule>every 4 hours from 07:50 to 19:50</schedule>-->
-        <!--<timezone>Europe/Rome</timezone>-->
-    <!--</cron>-->
+    <cron>
+        <url>/feature/home/expire</url>
+        <description>Weekly NoExp products</description>
+        <schedule>every saturday 8:00</schedule>
+        <timezone>Europe/Rome</timezone>
+    </cron>
 
 </cronentries>
 
