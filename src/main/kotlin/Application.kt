@@ -44,7 +44,7 @@ fun Application.main() {
 
     val gson = Gson()
     fun telegramMessage(chatId: Int, text: String) =
-        gson.toJsonTree(TelegramRequest.SendMessageRequest(chatId.toString(), text))
+        gson.toJsonTree(TelegramRequest.SendMessageRequest(chatId.toString(), text, TelegramApi.ParseMode.HTML.str))
             .apply { asJsonObject.addProperty("method", "sendMessage") }
             .toString()
 

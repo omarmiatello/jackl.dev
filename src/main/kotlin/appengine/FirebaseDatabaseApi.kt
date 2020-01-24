@@ -49,17 +49,24 @@ class PutResponse(val name: String)
 
 abstract class FirebaseDatabaseApi {
     abstract val basePath: String
+    open val devRules: Boolean = false
 
     private val httpTransport = UrlFetchTransport.getDefaultInstance()
 
-    private fun requestFactory(): HttpRequestFactory = httpTransport.createRequestFactory(
-        GoogleCredential.getApplicationDefault().createScoped(
-            listOf(
-                "https://www.googleapis.com/auth/firebase.database",
-                "https://www.googleapis.com/auth/userinfo.email"
+    private fun requestFactory(): HttpRequestFactory =
+        if (devRules) {
+            httpTransport.createRequestFactory()
+        } else {
+            httpTransport.createRequestFactory(
+                GoogleCredential.getApplicationDefault().createScoped(
+                    listOf(
+                        "https://www.googleapis.com/auth/firebase.database",
+                        "https://www.googleapis.com/auth/userinfo.email"
+                    )
+                )
             )
-        )
-    )
+        }
+
 
     init {
         if (!isAppEngine) {

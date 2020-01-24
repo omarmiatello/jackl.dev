@@ -9,6 +9,7 @@ import kotlinx.serialization.serializer
 
 object NoExpDB : FirebaseDatabaseApi() {
     override val basePath = "https://noexp-for-home.firebaseio.com/"
+    override val devRules = true
 
     var home by fireMap((String.serializer() to Product.serializer()).map, useCache = false)
 }
