@@ -3,6 +3,7 @@ package com.github.jacklt.gae.ktor.tg
 import com.github.jacklt.gae.ktor.tg.appengine.appEngineCacheFast
 import com.github.jacklt.gae.ktor.tg.appengine.telegram.Message
 import com.github.jacklt.gae.ktor.tg.data.FireDB
+import com.github.jacklt.gae.ktor.tg.feature.home.expireMessage
 import com.github.jacklt.gae.ktor.tg.utils.TelegramHelper
 import com.github.jacklt.gae.ktor.tg.utils.json
 import kotlinx.serialization.json.content
@@ -53,6 +54,9 @@ fun myApp(message: Message): String {
         }
         userInput.toLowerCase() in listOf("ss", "spreadsheet", "docs", "doc") -> {
             "https://docs.google.com/spreadsheets/d/10VolNdRjvS376p0AsYu3VIFdpnN3bNbeYe02ulX6du4/edit?usp=sharing"
+        }
+        userInput.toLowerCase() in listOf("expire", "exp") -> {
+            expireMessage()
         }
         userInput.startsWith("/") -> {
             val cmd = userInput.drop(1)
