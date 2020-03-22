@@ -6,9 +6,13 @@ annotation class AppConfigMarker
 @AppConfigMarker
 abstract class AppConfig {
     val telegram = TELEGRAM()
-
     fun telegram(conf: TELEGRAM.() -> Unit) {
         telegram.conf()
+    }
+
+    val esselunga = ESSELUNGA()
+    fun esselunga(conf: ESSELUNGA.() -> Unit) {
+        esselunga.conf()
     }
 
     companion object {
@@ -22,4 +26,11 @@ class TELEGRAM {
 
     // chatId: Unique identifier for the target chat or username of the target channel (in the format @channelusername)
     var chatId: String = ""
+}
+
+@AppConfigMarker
+class ESSELUNGA {
+    var username: String = ""
+
+    var password: String = ""
 }

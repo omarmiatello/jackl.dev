@@ -4,6 +4,7 @@ import com.github.jacklt.gae.ktor.tg.appengine.appEngineCacheFast
 import com.github.jacklt.gae.ktor.tg.appengine.telegram.Message
 import com.github.jacklt.gae.ktor.tg.data.FireDB
 import com.github.jacklt.gae.ktor.tg.feature.home.expireMessage
+import com.github.jacklt.gae.ktor.tg.feature.supermarket.EsselungaClient
 import com.github.jacklt.gae.ktor.tg.utils.TelegramHelper
 import com.github.jacklt.gae.ktor.tg.utils.json
 import kotlinx.serialization.builtins.ListSerializer
@@ -58,6 +59,10 @@ fun myApp(message: Message): String {
         }
         userInput.toLowerCase() in listOf("expire", "exp") -> {
             expireMessage()
+        }
+        userInput.toLowerCase() in listOf("esselunga", "s") -> {
+            val availableSlots = EsselungaClient.getAvailableSlots()
+            if (availableSlots.isNotEmpty()) "${availableSlots.size} slot disponibili: $availableSlots" else "Nessuno slot disponibile"
         }
         userInput.startsWith("/") -> {
             val cmd = userInput.drop(1)

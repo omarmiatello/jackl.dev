@@ -10,5 +10,9 @@ object ExampleConfig : AppConfig() {
             apiKey = ""
             chatId = ""
         }
+        esselunga {
+            username = "email"
+            password = "password"
+        }
     }
 }

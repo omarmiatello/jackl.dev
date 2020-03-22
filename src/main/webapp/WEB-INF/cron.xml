@@ -8,6 +8,13 @@
         <timezone>Europe/Rome</timezone>
     </cron>
 
+    <cron>
+        <url>/feature/supermarket/esselunga</url>
+        <description>Update Esselunga Status</description>
+        <schedule>every 9 minutes from 08:51 to 23:51</schedule>
+        <timezone>Europe/Rome</timezone>
+    </cron>
+
 </cronentries>
 
 

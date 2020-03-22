@@ -4,9 +4,8 @@ import com.github.jacklt.gae.ktor.tg.appengine.telegram.TelegramApi
 import com.github.jacklt.gae.ktor.tg.appengine.telegram.TelegramRequest
 import com.github.jacklt.gae.ktor.tg.appengine.telegram.Update
 import com.github.jacklt.gae.ktor.tg.config.MyConfig
-import com.github.jacklt.gae.ktor.tg.feature.home.NoExpDB
 import com.github.jacklt.gae.ktor.tg.feature.home.expireMessage
-import com.github.jacklt.gae.ktor.tg.utils.TelegramHelper
+import com.github.jacklt.gae.ktor.tg.feature.supermarket.EsselungaClient
 import com.google.gson.Gson
 import feature.home.Product
 import io.ktor.application.Application
@@ -90,6 +89,14 @@ fun Application.main() {
         get("feature/home/expire") {
             val msg = expireMessage()
             TelegramApi.sendMessage(MyConfig.chat_case, msg, TelegramApi.ParseMode.HTML)
+            call.respondText(msg)
+        }
+        get("feature/supermarket/esselunga") {
+            val availableSlots = EsselungaClient.getAvailableSlots()
+            val msg = if (availableSlots.isNotEmpty()) "${availableSlots.size} slot disponibili: $availableSlots" else "Nessuno slot disponibile"
+            if (availableSlots.isNotEmpty()) {
+                TelegramApi.sendMessage(MyConfig.chat_case, msg, TelegramApi.ParseMode.HTML)
+            }
             call.respondText(msg)
         }
     }
