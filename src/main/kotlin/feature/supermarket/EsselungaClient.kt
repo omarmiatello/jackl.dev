@@ -14,7 +14,7 @@ import java.util.logging.Logger
 
 object EsselungaClient {
     private val config = AppConfig.getDefault().esselunga
-    private const val TIMEOUT_MS = 5_000
+    private const val TIMEOUT_MS = 10_000
 
     fun getAvailableSlots(): List<Slot> {
         val keys = retryNotNull { esselungaKeys() } ?: return emptyList()
@@ -32,7 +32,7 @@ object EsselungaClient {
         }
         response ?: return emptyList()
         log(response.slots.toJsonPretty(Slot.serializer().list))
-        return response.slots.filter { it.status == "ENABLED" && it.viewStatus == "DISPONIBILE" }
+        return response.slots.filter { it.status != "DISABLED" && it.viewStatus != "ESAURITA" }
     }
 
     private fun esselungaKeys(): Keys? {
