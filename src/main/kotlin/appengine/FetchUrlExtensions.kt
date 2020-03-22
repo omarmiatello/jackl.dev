@@ -14,7 +14,7 @@ import kotlinx.serialization.json.JsonConfiguration
 val json = Json(JsonConfiguration.Default.copy(prettyPrint = true))
 
 @UnstableDefault
-val jsonNonStrict = Json(JsonConfiguration.Default.copy(strictMode = false))
+val jsonNonStrict = Json(JsonConfiguration.Default.copy(ignoreUnknownKeys = true))
 
 
 @UnstableDefault

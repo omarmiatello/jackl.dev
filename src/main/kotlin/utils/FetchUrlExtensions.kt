@@ -9,7 +9,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 
 
-val json = Json(JsonConfiguration.Default.copy(strictMode = false, prettyPrint = true, encodeDefaults = false))
+val json = Json(JsonConfiguration.Default.copy(ignoreUnknownKeys = true, prettyPrint = true, encodeDefaults = false))
 
 inline fun <T> T.toJson(serializer: SerializationStrategy<T>) = json.stringify(serializer, this)
 

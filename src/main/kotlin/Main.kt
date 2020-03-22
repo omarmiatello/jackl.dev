@@ -6,16 +6,16 @@ import com.github.jacklt.gae.ktor.tg.data.FireDB
 import com.github.jacklt.gae.ktor.tg.feature.home.expireMessage
 import com.github.jacklt.gae.ktor.tg.utils.TelegramHelper
 import com.github.jacklt.gae.ktor.tg.utils.json
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.content
-import kotlinx.serialization.list
-import kotlinx.serialization.map
-import kotlinx.serialization.serializer
 import java.util.logging.Level
 import java.util.logging.Logger
 
 fun main() = startApp()
 
-private val NAME_REVIEW_SERIALIZER = (String.serializer() to Review.serializer()).map
+private val NAME_REVIEW_SERIALIZER = MapSerializer(String.serializer(), Review.serializer())
 
 private fun Message.getUserName() = from
     ?.run { username ?: listOfNotNull(first_name, last_name).joinToString(" ") }
@@ -27,8 +27,9 @@ fun myApp(message: Message): String {
     appEngineCacheFast.delete(message.getUserName())
     return when {
         "cas[ae] \\d+".toRegex().matches(userInput.toLowerCase()) -> {
-            val max: Int =  "cas[ae] (\\d+)".toRegex().matchEntire(userInput.toLowerCase())!!.groupValues[1].toInt()
-            val msgs = getHousesWithReviewsStrings { it.first.action == House.ACTION_BUY && it.first.price <= max * 1000 }
+            val max: Int = "cas[ae] (\\d+)".toRegex().matchEntire(userInput.toLowerCase())!!.groupValues[1].toInt()
+            val msgs =
+                getHousesWithReviewsStrings { it.first.action == House.ACTION_BUY && it.first.price <= max * 1000 }
             sendTelegram(message.chat.id.toString(), msgs.dropLast(1))
             if (msgs.isEmpty()) "Non ci sono case" else msgs.last()
         }
@@ -186,12 +187,15 @@ fun getFullJson(predicate: (Pair<House, Map<String, Review>>) -> Boolean): Strin
 
         icons + nickEmptyMap + detailsEmptyMap + votesMap + detailsMap + objectMap
     }.toList()
-    return json.stringify((String.serializer() to String.serializer()).map.list, results)
+    return json.stringify(ListSerializer(MapSerializer(String.serializer(), String.serializer())), results)
 }
 
 // Houses utils
 
-private fun getHouses() = FireDB["house", (String.serializer() to House.serializer()).map].orEmpty().values
+private fun getHouses(): Collection<House> {
+    val t = (String.serializer() to House.serializer())
+    return FireDB["house", MapSerializer(t.first, t.second)].orEmpty().values
+}
 
 private fun getHouse(houseId: String) = FireDB["house/$houseId", House.serializer()]
 
@@ -222,7 +226,10 @@ private fun saveReviewVote(houseId: String, userName: String, vote: Int) {
 
 private fun getReviewsByHouse(houseId: String) = FireDB["review/$houseId", NAME_REVIEW_SERIALIZER].orEmpty()
 
-private fun getReviewsMap() = FireDB["review", (String.serializer() to NAME_REVIEW_SERIALIZER).map].orEmpty()
+private fun getReviewsMap(): Map<String, Map<String, Review>> {
+    val t = (String.serializer() to NAME_REVIEW_SERIALIZER)
+    return FireDB["review", MapSerializer(t.first, t.second)].orEmpty()
+}
 
 
 // Houses with Reviews utils
@@ -240,9 +247,8 @@ private fun List<Pair<House, Map<String, Review>>>.sorted(): List<Pair<House, Ma
 
 private fun List<Pair<House, Map<String, Review>>>.toStringList(): List<String> {
     return chunked(10).map {
-        it.joinToString("\n\n") {
-            val reviewsMap = it.second
-            it.first.descShort(reviewsMap, showTags = false)
+        it.joinToString("\n\n") { (house, reviewsMap) ->
+            house.descShort(reviewsMap, showTags = false)
         }
     }
 }

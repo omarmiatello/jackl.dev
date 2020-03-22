@@ -8,6 +8,8 @@ import com.google.api.client.http.GenericUrl
 import com.google.api.client.http.HttpContent
 import com.google.api.client.http.HttpRequestFactory
 import kotlinx.serialization.*
+import kotlinx.serialization.builtins.list
+import kotlinx.serialization.builtins.serializer
 
 sealed class TelegramRequest {
 

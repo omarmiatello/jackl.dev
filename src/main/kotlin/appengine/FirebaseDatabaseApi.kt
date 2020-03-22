@@ -14,6 +14,8 @@ import com.google.gson.Gson
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.*
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.properties.ReadWriteProperty
@@ -142,7 +144,7 @@ abstract class FirebaseDatabaseApi {
 
     fun <T> update(path: String, map: Map<String, T>, serializer: KSerializer<T>) {
         if (isAppEngine) {
-            appenginePatch("$basePath$path.json", map, (String.serializer() to serializer).map)
+            appenginePatch("$basePath$path.json", map, MapSerializer(String.serializer(), serializer))
         } else {
             FirebaseDatabase.getInstance().getReference(path).push().updateChildrenAsync(map).get()
         }

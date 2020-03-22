@@ -4,7 +4,8 @@ import com.github.jacklt.gae.ktor.tg.appengine.FirebaseDatabaseApi
 import com.github.jacklt.gae.ktor.tg.appengine.fireMap
 import com.github.jacklt.gae.ktor.tg.appengine.fireProperty
 import com.github.jacklt.gae.ktor.tg.appengine.telegram.Message
-import kotlinx.serialization.map
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.serializer
 
 // :: Firebase DB - Simplified mode ::
@@ -36,5 +37,5 @@ object FireDB : FirebaseDatabaseApi() {
 
     var testString by fireProperty(String.serializer())
     var lastMessage by fireProperty(Message.serializer())
-    var testMap by fireMap((String.serializer() to String.serializer()).map)
+    var testMap by fireMap(MapSerializer(String.serializer(), String.serializer()))
 }

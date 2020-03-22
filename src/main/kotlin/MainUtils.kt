@@ -3,8 +3,8 @@ package com.github.jacklt.gae.ktor.tg
 import com.github.jacklt.gae.ktor.tg.appengine.telegram.Chat
 import com.github.jacklt.gae.ktor.tg.appengine.telegram.Message
 import com.github.jacklt.gae.ktor.tg.appengine.telegram.User
-import kotlinx.io.PrintWriter
-import kotlinx.io.StringWriter
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.util.*
 import java.util.logging.Level
 import java.util.logging.Logger
