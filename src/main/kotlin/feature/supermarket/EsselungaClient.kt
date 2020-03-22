@@ -14,6 +14,7 @@ import java.util.logging.Logger
 
 object EsselungaClient {
     private val config = AppConfig.getDefault().esselunga
+    private const val TIMEOUT_MS = 5_000
 
     fun getAvailableSlots(): List<Slot> {
         val keys = retryNotNull { esselungaKeys() } ?: return emptyList()
@@ -85,6 +86,8 @@ object EsselungaClient {
         block: HttpURLConnection.() -> Unit = {}
     ): HttpURLConnection {
         return (URL(url).openConnection() as HttpURLConnection).apply {
+            connectTimeout = TIMEOUT_MS
+            readTimeout = TIMEOUT_MS
             doOutput = true
             requestMethod = "GET"
             setRequestProperty("Content-Type", "$_contentType; charset=UTF-8")
@@ -101,6 +104,8 @@ object EsselungaClient {
         block: HttpURLConnection.() -> Unit = {}
     ): HttpURLConnection {
         return (URL(url).openConnection() as HttpURLConnection).apply {
+            connectTimeout = TIMEOUT_MS
+            readTimeout = TIMEOUT_MS
             doOutput = true
             requestMethod = "POST"
             setRequestProperty("Content-Type", "$_contentType; charset=UTF-8")
