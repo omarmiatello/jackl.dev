@@ -93,9 +93,9 @@ fun Application.main() {
         }
         get("feature/supermarket/esselunga") {
             val availableSlots = EsselungaClient.getAvailableSlots()
-            val msg = if (availableSlots.isNotEmpty()) "${availableSlots.size} slot disponibili: $availableSlots" else "Nessuno slot disponibile"
+            val msg = if (availableSlots.isNotEmpty()) "${availableSlots.size} slot disponibili:\n${availableSlots.joinToString("\n")}" else "Nessuno slot disponibile"
             if (availableSlots.isNotEmpty()) {
-                TelegramApi.sendMessage(MyConfig.chat_case, msg, TelegramApi.ParseMode.HTML)
+                TelegramApi.sendMessage(MyConfig.chat_esselunga_venegono, "L'Esselunga di Venegono Inferiore in questo momento ha $msg", TelegramApi.ParseMode.HTML)
             }
             call.respondText(msg)
         }

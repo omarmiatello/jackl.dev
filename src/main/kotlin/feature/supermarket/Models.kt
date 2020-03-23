@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 
 @Serializable
-data class SlotResponse (
+data class SlotResponse(
 //    val messages: JsonArray,
 //    val bestRuleCarnetPromo: Boolean,
 //    val slotReservationMessage: Any? = null,
@@ -17,7 +17,7 @@ data class SlotResponse (
 )
 
 @Serializable
-data class Slot (
+data class Slot(
 //    val originalPrice: Double,
 //    val price: Double,
 //    val storeManagerID: Long,
@@ -33,4 +33,8 @@ data class Slot (
     val startTime: String,
     val endTime: String,
     val status: String
-)
+) {
+    override fun toString(): String {
+        return "[$uniqueTimeId] $status $viewStatus dalle $startTime alle $endTime"
+    }
+}

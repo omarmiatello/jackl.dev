@@ -10,8 +10,22 @@
 
     <cron>
         <url>/feature/supermarket/esselunga</url>
-        <description>Update Esselunga Status</description>
-        <schedule>every 9 minutes from 08:51 to 23:51</schedule>
+        <description>Update Esselunga Status 9 - 21</description>
+        <schedule>every 31 minutes from 9:01 to 20:59</schedule>
+        <timezone>Europe/Rome</timezone>
+    </cron>
+
+    <cron>
+        <url>/feature/supermarket/esselunga</url>
+        <description>Update Esselunga Status 21 - 0</description>
+        <schedule>every 7 minutes from 21:00 to 23:59</schedule>
+        <timezone>Europe/Rome</timezone>
+    </cron>
+
+    <cron>
+        <url>/feature/supermarket/esselunga</url>
+        <description>Update Esselunga Status 0 - 2</description>
+        <schedule>every 9 minutes from 0:00 to 2:00</schedule>
         <timezone>Europe/Rome</timezone>
     </cron>
 
