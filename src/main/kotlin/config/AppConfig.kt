@@ -4,33 +4,23 @@ package com.github.jacklt.gae.ktor.tg.config
 annotation class AppConfigMarker
 
 @AppConfigMarker
-abstract class AppConfig {
-    val telegram = TELEGRAM()
-    fun telegram(conf: TELEGRAM.() -> Unit) {
-        telegram.conf()
-    }
+abstract class AppConfig(
+    val telegram: Telegram,
+    val esselunga: Esselunga
+) {
 
-    val esselunga = ESSELUNGA()
-    fun esselunga(conf: ESSELUNGA.() -> Unit) {
-        esselunga.conf()
-    }
+    @AppConfigMarker
+    class Telegram(
+        var apiKey: String
+    )
+
+    @AppConfigMarker
+    class Esselunga(
+        var username: String,
+        var password: String
+    )
 
     companion object {
         fun getDefault(): AppConfig = MyConfig
     }
-}
-
-@AppConfigMarker
-class TELEGRAM {
-    var apiKey: String = ""
-
-    // chatId: Unique identifier for the target chat or username of the target channel (in the format @channelusername)
-    var chatId: String = ""
-}
-
-@AppConfigMarker
-class ESSELUNGA {
-    var username: String = ""
-
-    var password: String = ""
 }
