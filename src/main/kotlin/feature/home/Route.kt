@@ -1,7 +1,20 @@
 package feature.home
 
+import config.MyConfig
+import io.ktor.application.call
+import io.ktor.response.respondText
+import io.ktor.routing.Route
+import io.ktor.routing.get
+import service.telegram.TelegramApi
 import java.util.concurrent.TimeUnit
 
+fun Route.webhookNoExp() {
+    get("telegram/expire") {
+        val msg = expireMessage()
+        TelegramApi.sendMessage(MyConfig.chat_case, msg, TelegramApi.ParseMode.HTML)
+        call.respondText(msg)
+    }
+}
 
 fun expireMessage(): String {
     fun List<Product>.show(maxProd: Int, desc: String) = if (isEmpty()) "" else """$size prodotti $desc:
