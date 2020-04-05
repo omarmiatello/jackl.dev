@@ -1,12 +1,11 @@
-package com.github.jacklt.gae.ktor.tg.data
+package com.github.omarmiatello.jackldev.feature.newhome
 
-import com.github.jacklt.gae.ktor.tg.appengine.FirebaseDatabaseApi
-import com.github.jacklt.gae.ktor.tg.appengine.fireMap
-import com.github.jacklt.gae.ktor.tg.appengine.fireProperty
-import com.github.jacklt.gae.ktor.tg.appengine.telegram.Message
+import com.github.omarmiatello.jackldev.service.FirebaseDatabaseApi
+import com.github.omarmiatello.jackldev.service.fireMap
+import com.github.omarmiatello.jackldev.service.fireProperty
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.serializer
+import service.telegram.Message
 
 // :: Firebase DB - Simplified mode ::
 // - Read example:
@@ -32,10 +31,16 @@ import kotlinx.serialization.serializer
 // delete: delete a path
 //      FireDB.delete("pathExample")
 
-object FireDB : FirebaseDatabaseApi() {
-    override val basePath = "https://jutils-3f869.firebaseio.com/"
-
+object NewHomeDB : FirebaseDatabaseApi(
+    basePath = "https://jutils-3f869.firebaseio.com/",
+    credentialsFile = "jutils-credentials.json"
+) {
     var testString by fireProperty(String.serializer())
     var lastMessage by fireProperty(Message.serializer())
-    var testMap by fireMap(MapSerializer(String.serializer(), String.serializer()))
+    var testMap by fireMap(
+        MapSerializer(
+            String.serializer(),
+            String.serializer()
+        )
+    )
 }

@@ -1,15 +1,17 @@
-package com.github.jacklt.gae.ktor.tg.appengine.telegram
+package service.telegram
 
-import com.github.jacklt.gae.ktor.tg.config.AppConfig
-import com.github.jacklt.gae.ktor.tg.utils.parseNotNull
-import com.github.jacklt.gae.ktor.tg.utils.toJsonContent
-import com.google.api.client.extensions.appengine.http.UrlFetchTransport
-import com.google.api.client.http.GenericUrl
-import com.google.api.client.http.HttpContent
-import com.google.api.client.http.HttpRequestFactory
-import kotlinx.serialization.*
+import com.github.omarmiatello.jackldev.service.httpClient
+import config.AppConfig
+import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.http.content.TextContent
+import kotlinx.serialization.ContextualSerialization
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.list
 import kotlinx.serialization.builtins.serializer
+import utils.parse
+import utils.toJsonContent
 
 sealed class TelegramRequest {
 
@@ -571,18 +573,20 @@ sealed class TelegramRequest {
 }
 
 object TelegramMethod {
-    private val config = AppConfig.getDefault().telegram
+    private val config = AppConfig.default.telegram
     private val basePath = "https://api.telegram.org/bot${config.apiKey}"
-    private val httpTransport = UrlFetchTransport.getDefaultInstance()
-    private fun requestFactory(): HttpRequestFactory = httpTransport.createRequestFactory()
 
-    private fun <T> telegram(path: String, response: KSerializer<T>) =
-        requestFactory().buildGetRequest(GenericUrl(path)).execute()
-            .parseNotNull(TelegramResponse.serializer(response))
+    private suspend fun <T> telegram(path: String, response: KSerializer<T>): TelegramResponse<T> =
+        httpClient.get<String>(path)
+            .parse(TelegramResponse.serializer(response))
 
-    private fun <T> telegram(path: String, body: HttpContent, response: KSerializer<T>) =
-        requestFactory().buildPostRequest(GenericUrl(path), body).execute()
-            .parseNotNull(TelegramResponse.serializer(response))
+    private suspend fun <T> telegram(
+        path: String,
+        bodyContent: TextContent,
+        response: KSerializer<T>
+    ): TelegramResponse<T> =
+        httpClient.post<String>(path) { body = bodyContent }
+            .parse(TelegramResponse.serializer(response))
 
     @Serializable
     data class TelegramResponse<T>(val ok: Boolean, val result: T)
@@ -602,7 +606,7 @@ object TelegramMethod {
      *
      * @return [List<Update>]
      * */
-    fun getUpdates(
+    suspend fun getUpdates(
         offset: Int? = null,
         limit: Int? = null,
         timeout: Int? = null,
@@ -631,7 +635,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun setWebhook(
+    suspend fun setWebhook(
         url: String,
         certificate: Any? = null,
         max_connections: Int? = null,
@@ -647,15 +651,9 @@ object TelegramMethod {
         Boolean.serializer()
     )
 
-    fun deleteWebhook() = telegram(
-        "$basePath/deleteWebhook",
-        Boolean.serializer()
-    )
+    suspend fun deleteWebhook() = telegram("$basePath/deleteWebhook", Boolean.serializer())
 
-    fun getWebhookInfo() = telegram(
-        "$basePath/getWebhookInfo",
-        WebhookInfo.serializer()
-    )
+    suspend fun getWebhookInfo() = telegram("$basePath/getWebhookInfo", WebhookInfo.serializer())
 
 
     // Available methods
@@ -673,7 +671,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun sendMessage(
+    suspend fun sendMessage(
         chat_id: Any,
         text: String,
         parse_mode: String? = null,
@@ -705,7 +703,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun forwardMessage(
+    suspend fun forwardMessage(
         chat_id: Any,
         from_chat_id: Any,
         disable_notification: Boolean? = null,
@@ -734,7 +732,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun sendPhoto(
+    suspend fun sendPhoto(
         chat_id: Any,
         photo: Any,
         caption: String? = null,
@@ -773,7 +771,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun sendAudio(
+    suspend fun sendAudio(
         chat_id: Any,
         audio: Any,
         caption: String? = null,
@@ -817,7 +815,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun sendDocument(
+    suspend fun sendDocument(
         chat_id: Any,
         document: Any,
         thumb: Any? = null,
@@ -859,7 +857,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun sendVideo(
+    suspend fun sendVideo(
         chat_id: Any,
         video: Any,
         duration: Int? = null,
@@ -908,7 +906,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun sendAnimation(
+    suspend fun sendAnimation(
         chat_id: Any,
         animation: Any,
         duration: Int? = null,
@@ -952,7 +950,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun sendVoice(
+    suspend fun sendVoice(
         chat_id: Any,
         voice: Any,
         caption: String? = null,
@@ -990,7 +988,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun sendVideoNote(
+    suspend fun sendVideoNote(
         chat_id: Any,
         video_note: Any,
         duration: Int? = null,
@@ -1024,7 +1022,7 @@ object TelegramMethod {
      *
      * @return [Messages]
      * */
-    fun sendMediaGroup(
+    suspend fun sendMediaGroup(
         chat_id: Any,
         media: List<Any>,
         disable_notification: Boolean? = null,
@@ -1053,7 +1051,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun sendLocation(
+    suspend fun sendLocation(
         chat_id: Any,
         latitude: Float,
         longitude: Float,
@@ -1087,7 +1085,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun editMessageLiveLocation(
+    suspend fun editMessageLiveLocation(
         chat_id: Any? = null,
         message_id: Int? = null,
         inline_message_id: String? = null,
@@ -1117,7 +1115,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun stopMessageLiveLocation(
+    suspend fun stopMessageLiveLocation(
         chat_id: Any? = null,
         message_id: Int? = null,
         inline_message_id: String? = null,
@@ -1149,7 +1147,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun sendVenue(
+    suspend fun sendVenue(
         chat_id: Any,
         latitude: Float,
         longitude: Float,
@@ -1191,7 +1189,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun sendContact(
+    suspend fun sendContact(
         chat_id: Any,
         phone_number: String,
         first_name: String,
@@ -1227,7 +1225,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun sendPoll(
+    suspend fun sendPoll(
         chat_id: Any,
         question: String,
         options: List<String>,
@@ -1257,7 +1255,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun sendChatAction(
+    suspend fun sendChatAction(
         chat_id: Any,
         action: String
     ) = telegram(
@@ -1278,7 +1276,7 @@ object TelegramMethod {
      *
      * @return [UserProfilePhotos]
      * */
-    fun getUserProfilePhotos(
+    suspend fun getUserProfilePhotos(
         user_id: Int,
         offset: Int? = null,
         limit: Int? = null
@@ -1299,7 +1297,7 @@ object TelegramMethod {
      *
      * @return [File]
      * */
-    fun getFile(
+    suspend fun getFile(
         file_id: String
     ) = telegram(
         "$basePath/getFile",
@@ -1318,7 +1316,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun kickChatMember(
+    suspend fun kickChatMember(
         chat_id: Any,
         user_id: Int,
         until_date: Int? = null
@@ -1340,7 +1338,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun unbanChatMember(
+    suspend fun unbanChatMember(
         chat_id: Any,
         user_id: Int
     ) = telegram(
@@ -1365,7 +1363,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun restrictChatMember(
+    suspend fun restrictChatMember(
         chat_id: Any,
         user_id: Int,
         until_date: Int? = null,
@@ -1403,7 +1401,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun promoteChatMember(
+    suspend fun promoteChatMember(
         chat_id: Any,
         user_id: Int,
         can_change_info: Boolean? = null,
@@ -1440,11 +1438,12 @@ object TelegramMethod {
      *
      * @return [String]
      * */
-    fun exportChatInviteLink(
+    suspend fun exportChatInviteLink(
         chat_id: Any
     ) = telegram(
         "$basePath/exportChatInviteLink",
-        TelegramRequest.ExportChatInviteLinkRequest(chat_id).toJsonContent(TelegramRequest.ExportChatInviteLinkRequest.serializer()),
+        TelegramRequest.ExportChatInviteLinkRequest(chat_id)
+            .toJsonContent(TelegramRequest.ExportChatInviteLinkRequest.serializer()),
         String.serializer()
     )
 
@@ -1458,7 +1457,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun setChatPhoto(
+    suspend fun setChatPhoto(
         chat_id: Any,
         photo: Any
     ) = telegram(
@@ -1479,11 +1478,12 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun deleteChatPhoto(
+    suspend fun deleteChatPhoto(
         chat_id: Any
     ) = telegram(
         "$basePath/deleteChatPhoto",
-        TelegramRequest.DeleteChatPhotoRequest(chat_id).toJsonContent(TelegramRequest.DeleteChatPhotoRequest.serializer()),
+        TelegramRequest.DeleteChatPhotoRequest(chat_id)
+            .toJsonContent(TelegramRequest.DeleteChatPhotoRequest.serializer()),
         Boolean.serializer()
     )
 
@@ -1497,7 +1497,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun setChatTitle(
+    suspend fun setChatTitle(
         chat_id: Any,
         title: String
     ) = telegram(
@@ -1517,7 +1517,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun setChatDescription(
+    suspend fun setChatDescription(
         chat_id: Any,
         description: String? = null
     ) = telegram(
@@ -1538,7 +1538,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun pinChatMessage(
+    suspend fun pinChatMessage(
         chat_id: Any,
         message_id: Int,
         disable_notification: Boolean? = null
@@ -1559,11 +1559,12 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun unpinChatMessage(
+    suspend fun unpinChatMessage(
         chat_id: Any
     ) = telegram(
         "$basePath/unpinChatMessage",
-        TelegramRequest.UnpinChatMessageRequest(chat_id).toJsonContent(TelegramRequest.UnpinChatMessageRequest.serializer()),
+        TelegramRequest.UnpinChatMessageRequest(chat_id)
+            .toJsonContent(TelegramRequest.UnpinChatMessageRequest.serializer()),
         Boolean.serializer()
     )
 
@@ -1574,7 +1575,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun leaveChat(
+    suspend fun leaveChat(
         chat_id: Any
     ) = telegram(
         "$basePath/leaveChat",
@@ -1589,7 +1590,7 @@ object TelegramMethod {
      *
      * @return [Chat]
      * */
-    fun getChat(
+    suspend fun getChat(
         chat_id: Any
     ) = telegram(
         "$basePath/getChat",
@@ -1604,11 +1605,12 @@ object TelegramMethod {
      *
      * @return [List<ChatMember>]
      * */
-    fun getChatAdministrators(
+    suspend fun getChatAdministrators(
         chat_id: Any
     ) = telegram(
         "$basePath/getChatAdministrators",
-        TelegramRequest.GetChatAdministratorsRequest(chat_id).toJsonContent(TelegramRequest.GetChatAdministratorsRequest.serializer()),
+        TelegramRequest.GetChatAdministratorsRequest(chat_id)
+            .toJsonContent(TelegramRequest.GetChatAdministratorsRequest.serializer()),
         ChatMember.serializer().list
     )
 
@@ -1619,11 +1621,12 @@ object TelegramMethod {
      *
      * @return [Int]
      * */
-    fun getChatMembersCount(
+    suspend fun getChatMembersCount(
         chat_id: Any
     ) = telegram(
         "$basePath/getChatMembersCount",
-        TelegramRequest.GetChatMembersCountRequest(chat_id).toJsonContent(TelegramRequest.GetChatMembersCountRequest.serializer()),
+        TelegramRequest.GetChatMembersCountRequest(chat_id)
+            .toJsonContent(TelegramRequest.GetChatMembersCountRequest.serializer()),
         Int.serializer()
     )
 
@@ -1635,7 +1638,7 @@ object TelegramMethod {
      *
      * @return [ChatMember]
      * */
-    fun getChatMember(
+    suspend fun getChatMember(
         chat_id: Any,
         user_id: Int
     ) = telegram(
@@ -1655,7 +1658,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun setChatStickerSet(
+    suspend fun setChatStickerSet(
         chat_id: Any,
         sticker_set_name: String
     ) = telegram(
@@ -1674,11 +1677,12 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun deleteChatStickerSet(
+    suspend fun deleteChatStickerSet(
         chat_id: Any
     ) = telegram(
         "$basePath/deleteChatStickerSet",
-        TelegramRequest.DeleteChatStickerSetRequest(chat_id).toJsonContent(TelegramRequest.DeleteChatStickerSetRequest.serializer()),
+        TelegramRequest.DeleteChatStickerSetRequest(chat_id)
+            .toJsonContent(TelegramRequest.DeleteChatStickerSetRequest.serializer()),
         Boolean.serializer()
     )
 
@@ -1695,7 +1699,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun answerCallbackQuery(
+    suspend fun answerCallbackQuery(
         callback_query_id: String,
         text: String? = null,
         show_alert: Boolean? = null,
@@ -1729,7 +1733,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun editMessageText(
+    suspend fun editMessageText(
         chat_id: Any? = null,
         message_id: Int? = null,
         inline_message_id: String? = null,
@@ -1763,7 +1767,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun editMessageCaption(
+    suspend fun editMessageCaption(
         chat_id: Any? = null,
         message_id: Int? = null,
         inline_message_id: String? = null,
@@ -1794,7 +1798,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun editMessageMedia(
+    suspend fun editMessageMedia(
         chat_id: Any? = null,
         message_id: Int? = null,
         inline_message_id: String? = null,
@@ -1822,7 +1826,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun editMessageReplyMarkup(
+    suspend fun editMessageReplyMarkup(
         chat_id: Any? = null,
         message_id: Int? = null,
         inline_message_id: String? = null,
@@ -1847,7 +1851,7 @@ object TelegramMethod {
      *
      * @return [results]
      * */
-    fun stopPoll(
+    suspend fun stopPoll(
         chat_id: Any,
         message_id: Int,
         reply_markup: InlineKeyboardMarkup? = null
@@ -1869,7 +1873,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun deleteMessage(
+    suspend fun deleteMessage(
         chat_id: Any,
         message_id: Int
     ) = telegram(
@@ -1895,7 +1899,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun sendSticker(
+    suspend fun sendSticker(
         chat_id: Any,
         sticker: Any,
         disable_notification: Boolean? = null,
@@ -1920,7 +1924,7 @@ object TelegramMethod {
      *
      * @return [StickerSet]
      * */
-    fun getStickerSet(
+    suspend fun getStickerSet(
         name: String
     ) = telegram(
         "$basePath/getStickerSet",
@@ -1936,7 +1940,7 @@ object TelegramMethod {
      *
      * @return [File]
      * */
-    fun uploadStickerFile(
+    suspend fun uploadStickerFile(
         user_id: Int,
         png_sticker: Any
     ) = telegram(
@@ -1961,7 +1965,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun createNewStickerSet(
+    suspend fun createNewStickerSet(
         user_id: Int,
         name: String,
         title: String,
@@ -1994,7 +1998,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun addStickerToSet(
+    suspend fun addStickerToSet(
         user_id: Int,
         name: String,
         png_sticker: Any,
@@ -2020,7 +2024,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun setStickerPositionInSet(
+    suspend fun setStickerPositionInSet(
         sticker: String,
         position: Int
     ) = telegram(
@@ -2039,11 +2043,12 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun deleteStickerFromSet(
+    suspend fun deleteStickerFromSet(
         sticker: String
     ) = telegram(
         "$basePath/deleteStickerFromSet",
-        TelegramRequest.DeleteStickerFromSetRequest(sticker).toJsonContent(TelegramRequest.DeleteStickerFromSetRequest.serializer()),
+        TelegramRequest.DeleteStickerFromSetRequest(sticker)
+            .toJsonContent(TelegramRequest.DeleteStickerFromSetRequest.serializer()),
         Boolean.serializer()
     )
 
@@ -2063,7 +2068,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun answerInlineQuery(
+    suspend fun answerInlineQuery(
         inline_query_id: String,
         results: List<InlineQueryResult>,
         cache_time: Int? = null,
@@ -2117,7 +2122,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun sendInvoice(
+    suspend fun sendInvoice(
         chat_id: Int,
         title: String,
         description: String,
@@ -2181,7 +2186,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun answerShippingQuery(
+    suspend fun answerShippingQuery(
         shipping_query_id: String,
         ok: Boolean,
         shipping_options: List<ShippingOption>? = null,
@@ -2206,7 +2211,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun answerPreCheckoutQuery(
+    suspend fun answerPreCheckoutQuery(
         pre_checkout_query_id: String,
         ok: Boolean,
         error_message: String? = null
@@ -2231,7 +2236,7 @@ object TelegramMethod {
      *
      * @return [Boolean]
      * */
-    fun setPassportDataErrors(
+    suspend fun setPassportDataErrors(
         user_id: Int,
         errors: List<PassportElementError>
     ) = telegram(
@@ -2257,7 +2262,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun sendGame(
+    suspend fun sendGame(
         chat_id: Int,
         game_short_name: String,
         disable_notification: Boolean? = null,
@@ -2288,7 +2293,7 @@ object TelegramMethod {
      *
      * @return [Message]
      * */
-    fun setGameScore(
+    suspend fun setGameScore(
         user_id: Int,
         score: Int,
         force: Boolean? = null,
@@ -2322,7 +2327,7 @@ object TelegramMethod {
      *
      * @return [List<GameHighScore>]
      * */
-    fun getGameHighScores(
+    suspend fun getGameHighScores(
         user_id: Int,
         chat_id: Int? = null,
         message_id: Int? = null,

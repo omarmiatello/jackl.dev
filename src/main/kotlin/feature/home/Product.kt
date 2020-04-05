@@ -1,7 +1,7 @@
 package feature.home
 
-import com.github.jacklt.gae.ktor.tg.utils.formatDays
 import kotlinx.serialization.Serializable
+import utils.formatDays
 
 @Serializable
 data class Product(

@@ -1,4 +1,4 @@
-package com.github.jacklt.gae.ktor.tg.appengine.telegram
+package service.telegram
 
 import kotlinx.serialization.ContextualSerialization
 import kotlinx.serialization.Serializable

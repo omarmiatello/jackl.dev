@@ -1,21 +1,22 @@
-package com.github.jacklt.gae.ktor.tg
+package com.github.omarmiatello.jackldev
 
-import com.github.jacklt.gae.ktor.tg.appengine.telegram.TelegramApi
-import com.github.jacklt.gae.ktor.tg.appengine.telegram.TelegramRequest
-import com.github.jacklt.gae.ktor.tg.appengine.telegram.Update
-import com.github.jacklt.gae.ktor.tg.config.MyConfig
-import com.github.jacklt.gae.ktor.tg.feature.home.expireMessage
-import com.github.jacklt.gae.ktor.tg.feature.supermarket.EsselungaClient
+import com.github.omarmiatello.jackldev.feature.newhome.House
 import com.google.gson.Gson
-import feature.home.Product
+import config.MyConfig
+import feature.home.expireMessage
+import feature.supermarket.EsselungaClient
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.CallLogging
+import io.ktor.features.ContentNegotiation
 import io.ktor.features.DefaultHeaders
 import io.ktor.features.StatusPages
+import io.ktor.html.respondHtml
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.resources
+import io.ktor.http.content.static
 import io.ktor.request.receiveText
 import io.ktor.response.respond
 import io.ktor.response.respondText
@@ -23,27 +24,37 @@ import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.route
 import io.ktor.routing.routing
-import kotlinx.serialization.json.Json
-import java.util.concurrent.TimeUnit
+import io.ktor.serialization.json
+import kotlinx.html.body
+import kotlinx.html.h1
+import service.telegram.TelegramApi
+import service.telegram.TelegramRequest
+import service.telegram.Update
+import utils.json
 
-/**
- * Entry Point of the application. This function is referenced in the
- * resources/application.conf file inside the ktor.application.modules.
- *
- * For more information about this file: https://ktor.io/servers/configuration.html#hocon-file
- */
-fun Application.main() {
+fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
+
+@Suppress("unused") // Referenced in application.conf
+@kotlin.jvm.JvmOverloads
+fun Application.module() {
+
     // This adds automatically Date and Server headers to each response, and would allow you to configure
     // additional headers served to each response.
-    install(DefaultHeaders)
+    install(DefaultHeaders) {
+        header("X-Engine", "Ktor") // will send this header with each response
+    }
+
+    install(ContentNegotiation) {
+        json()
+    }
+
     // This uses use the logger to log every call (request/response)
     install(CallLogging)
 
     install(StatusPages)
 
-    val gson = Gson()
     fun telegramMessage(chatId: Int, text: String) =
-        gson.toJsonTree(TelegramRequest.SendMessageRequest(chatId.toString(), text, TelegramApi.ParseMode.HTML.str))
+        Gson().toJsonTree(TelegramRequest.SendMessageRequest(chatId.toString(), text, TelegramApi.ParseMode.HTML.str))
             .apply { asJsonObject.addProperty("method", "sendMessage") }
             .toString()
 
@@ -54,9 +65,12 @@ fun Application.main() {
         // It provides a DSL for building HTML to a Writer, potentially in a chunked way.
         // More information about this DSL: https://github.com/Kotlin/kotlinx.html
 
+        get("/") {
+            call.respondHtml { body { h1 { +"${emojiAnimals.random()} + ${emojiAnimals.random()} = ${emojiAnimals.random()}" } } }
+        }
         route("webhook") {
             post("telegram") {
-                val request = Json.nonstrict.parse(Update.serializer(), call.receiveText())
+                val request = json.parse(Update.serializer(), call.receiveText())
 
                 when {
                     request.message != null -> {
@@ -93,11 +107,29 @@ fun Application.main() {
         }
         get("feature/supermarket/esselunga") {
             val availableSlots = EsselungaClient.getAvailableSlots()
-            val msg = if (availableSlots.isNotEmpty()) "${availableSlots.size} slot disponibili:\n${availableSlots.joinToString("\n")}" else "Nessuno slot disponibile"
+            val msg = buildString {
+                if (availableSlots.isNotEmpty()) {
+                    appendln("${availableSlots.size} slot disponibili:")
+                    append(availableSlots.joinToString("\n"))
+                } else {
+                    append("Nessuno slot disponibile")
+                }
+            }
             if (availableSlots.isNotEmpty()) {
-                TelegramApi.sendMessage(MyConfig.chat_esselunga_venegono, "L'Esselunga di Venegono Inferiore in questo momento ha $msg", TelegramApi.ParseMode.HTML)
+                TelegramApi.sendMessage(
+                    MyConfig.chat_esselunga_venegono,
+                    "L'Esselunga di Venegono Inferiore in questo momento ha $msg",
+                    TelegramApi.ParseMode.HTML
+                )
             }
             call.respondText(msg)
         }
+
+        static("/static") {
+            resources("static")
+        }
     }
 }
+
+class AuthenticationException : RuntimeException()
+class AuthorizationException : RuntimeException()

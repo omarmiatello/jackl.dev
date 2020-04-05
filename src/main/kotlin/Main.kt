@@ -1,31 +1,35 @@
-package com.github.jacklt.gae.ktor.tg
+package com.github.omarmiatello.jackldev
 
-import com.github.jacklt.gae.ktor.tg.appengine.appEngineCacheFast
-import com.github.jacklt.gae.ktor.tg.appengine.telegram.Message
-import com.github.jacklt.gae.ktor.tg.data.FireDB
-import com.github.jacklt.gae.ktor.tg.feature.home.expireMessage
-import com.github.jacklt.gae.ktor.tg.feature.supermarket.EsselungaClient
-import com.github.jacklt.gae.ktor.tg.utils.TelegramHelper
-import com.github.jacklt.gae.ktor.tg.utils.json
+import com.github.omarmiatello.jackldev.feature.newhome.House
+import com.github.omarmiatello.jackldev.feature.newhome.NewHomeDB
+import com.github.omarmiatello.jackldev.feature.newhome.Review
+import com.github.omarmiatello.jackldev.feature.newhome.parseHouse
+import com.github.omarmiatello.jackldev.utils.InMemoryCache
+import feature.home.expireMessage
+import feature.supermarket.EsselungaClient
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.content
+import service.telegram.Message
+import utils.TelegramHelper
+import utils.json
 import java.util.logging.Level
 import java.util.logging.Logger
 
-fun main() = startApp()
+suspend fun main() = startApp()
 
 private val NAME_REVIEW_SERIALIZER = MapSerializer(String.serializer(), Review.serializer())
 
-private fun Message.getUserName() = from
-    ?.run { username ?: listOfNotNull(first_name, last_name).joinToString(" ") }
-    ?: "unknown user"
+private val Message.userName
+    get() = from
+        ?.run { username ?: listOfNotNull(first_name, last_name).joinToString(" ") }
+        ?: "unknown user"
 
-fun myApp(message: Message): String {
+suspend fun myApp(message: Message): String {
     val userInput = message.text.orEmpty()
-    val houseId = appEngineCacheFast[message.getUserName()]
-    appEngineCacheFast.delete(message.getUserName())
+    val houseId = InMemoryCache[message.userName]
+    InMemoryCache.delete(message.userName)
     return when {
         "cas[ae] \\d+".toRegex().matches(userInput.toLowerCase()) -> {
             val max: Int = "cas[ae] (\\d+)".toRegex().matchEntire(userInput.toLowerCase())!!.groupValues[1].toInt()
@@ -50,7 +54,7 @@ fun myApp(message: Message): String {
             if (msgs.isEmpty()) "Non ci sono aste" else msgs.last()
         }
         userInput.toLowerCase() in listOf("voto", "vota", "votare") -> {
-            val msgs = getHousesWithReviewsStrings { message.getUserName() !in it.second.keys }
+            val msgs = getHousesWithReviewsStrings { message.userName !in it.second.keys }
             sendTelegram(message.chat.id.toString(), msgs.dropLast(1))
             if (msgs.isEmpty()) "Hai votato tutto! 🎉" else msgs.last()
         }
@@ -87,7 +91,7 @@ fun myApp(message: Message): String {
 private fun showHouse(message: Message, houseId: String): String {
     val house = getHouse(houseId)
     return if (house != null) {
-        appEngineCacheFast[message.getUserName()] = houseId
+        InMemoryCache[message.userName] = houseId
         val reviewsMap = getReviewsByHouse(houseId)
         house.descDetails(reviewsMap)
     } else {
@@ -98,7 +102,7 @@ private fun showHouse(message: Message, houseId: String): String {
 private fun updateComment(message: Message, houseId: String): String {
     val house = getHouse(houseId)
     return if (house != null) {
-        val userName = message.getUserName()
+        val userName = message.userName
         val userInput = message.text.orEmpty()
         if (userInput.all { it.isDigit() }) {
             saveReviewVote(houseId, userName, userInput.toInt())
@@ -114,7 +118,7 @@ private fun updateComment(message: Message, houseId: String): String {
         val reviewsMap = getReviewsByHouse(houseId)
         val houseNeedReview = getHousesWithReviews()
             .sorted()
-            .firstOrNull { message.getUserName() !in it.second.keys }
+            .firstOrNull { message.userName !in it.second.keys }
             ?.first
         val nextReview = if (houseNeedReview == null) {
             "Hai votato tutto! 🎉"
@@ -149,7 +153,7 @@ private fun searchAndSaveHouses(message: Message): String {
 
     return if (houses.size == 1) {
         val house = houses.first()
-        appEngineCacheFast[message.getUserName()] = house.let { it.idDatabase }
+        InMemoryCache[message.userName] = house.let { it.idDatabase }
         val reviewsMap = getReviewsByHouse(house.idDatabase)
         house.descDetails(reviewsMap)
     } else {
@@ -163,7 +167,7 @@ private fun searchAndSaveHouses(message: Message): String {
     }
 }
 
-private fun sendTelegram(chatId: String, msgs: List<String>) {
+private suspend fun sendTelegram(chatId: String, msgs: List<String>) {
     if (msgs.isNotEmpty()) {
         TelegramHelper(chatId).send(*msgs.toTypedArray())
     }
@@ -199,41 +203,40 @@ fun getFullJson(predicate: (Pair<House, Map<String, Review>>) -> Boolean): Strin
 
 private fun getHouses(): Collection<House> {
     val t = (String.serializer() to House.serializer())
-    return FireDB["house", MapSerializer(t.first, t.second)].orEmpty().values
+    return NewHomeDB["house", MapSerializer(t.first, t.second)].orEmpty().values
 }
 
-private fun getHouse(houseId: String) = FireDB["house/$houseId", House.serializer()]
+private fun getHouse(houseId: String) = NewHomeDB["house/$houseId", House.serializer()]
 
 private fun saveHouses(houses: List<House>) {
-    FireDB.update("house", houses.associateBy { it.idDatabase }, House.serializer())
+    NewHomeDB.update("house", houses.associateBy { it.idDatabase }, House.serializer())
 }
 
 private fun deleteHouse(houseId: String): String {
-    FireDB.delete("house/$houseId")
-    FireDB.delete("review/$houseId")
+    NewHomeDB.delete("house/$houseId")
+    NewHomeDB.delete("review/$houseId")
     return "🏠 eliminata!"
 }
 
 fun visitedHouse(houseId: String, visited: Boolean): String {
-    FireDB["house/$houseId/visited", Boolean.serializer()] = visited
+    NewHomeDB["house/$houseId/visited", Boolean.serializer()] = visited
     return "🏠 ${if (visited) "vista" else "da vedere"}!"
 }
 
 // Reviews utils
 
 private fun saveReview(houseId: String, userName: String, review: Review) {
-    FireDB["review/$houseId/$userName", Review.serializer()] = review
+    NewHomeDB["review/$houseId/$userName", Review.serializer()] = review
 }
 
 private fun saveReviewVote(houseId: String, userName: String, vote: Int) {
-    FireDB["review/$houseId/$userName/vote", Int.serializer()] = vote
+    NewHomeDB["review/$houseId/$userName/vote", Int.serializer()] = vote
 }
 
-private fun getReviewsByHouse(houseId: String) = FireDB["review/$houseId", NAME_REVIEW_SERIALIZER].orEmpty()
+private fun getReviewsByHouse(houseId: String) = NewHomeDB["review/$houseId", NAME_REVIEW_SERIALIZER].orEmpty()
 
 private fun getReviewsMap(): Map<String, Map<String, Review>> {
-    val t = (String.serializer() to NAME_REVIEW_SERIALIZER)
-    return FireDB["review", MapSerializer(t.first, t.second)].orEmpty()
+    return NewHomeDB["review", MapSerializer(String.serializer(), NAME_REVIEW_SERIALIZER)].orEmpty()
 }
 
 

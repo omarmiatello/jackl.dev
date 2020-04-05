@@ -1,7 +1,6 @@
-package com.github.jacklt.gae.ktor.tg.feature.supermarket
+package feature.supermarket
 
 import kotlinx.serialization.Serializable
-
 
 @Serializable
 data class SlotResponse(

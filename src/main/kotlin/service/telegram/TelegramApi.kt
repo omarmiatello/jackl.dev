@@ -1,7 +1,7 @@
-package com.github.jacklt.gae.ktor.tg.appengine.telegram
+package service.telegram
 
 object TelegramApi {
-    fun sendMessage(
+    suspend fun sendMessage(
         chatId: String,
         text: String,
         parseMode: ParseMode = ParseMode.NONE,
@@ -15,7 +15,7 @@ object TelegramApi {
         reply_markup = button?.let { InlineKeyboardMarkup(it) }
     )
 
-    fun editMessageText(
+    suspend fun editMessageText(
         chatId: String,
         messageId: Int,
         text: String,
@@ -31,7 +31,7 @@ object TelegramApi {
         reply_markup = button?.let { InlineKeyboardMarkup(it) }
     )
 
-    fun forwardMessage(
+    suspend fun forwardMessage(
         chatId: String,
         fromChatId: String,
         messageId: Int,
@@ -43,7 +43,7 @@ object TelegramApi {
         disable_notification = disableNotification
     )
 
-    fun deleteMessage(chatId: String, messageId: Int) = TelegramMethod.deleteMessage(chatId, messageId)
+    suspend fun deleteMessage(chatId: String, messageId: Int) = TelegramMethod.deleteMessage(chatId, messageId)
 
     enum class ParseMode(val str: String?) {
         NONE(null),

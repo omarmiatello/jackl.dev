@@ -1,6 +1,5 @@
-package com.github.jacklt.gae.ktor.tg.feature.home
+package feature.home
 
-import feature.home.Product
 import java.util.concurrent.TimeUnit
 
 

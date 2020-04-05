@@ -1,8 +1,8 @@
-package com.github.jacklt.gae.ktor.tg
+package com.github.omarmiatello.jackldev
 
-import com.github.jacklt.gae.ktor.tg.appengine.telegram.Chat
-import com.github.jacklt.gae.ktor.tg.appengine.telegram.Message
-import com.github.jacklt.gae.ktor.tg.appengine.telegram.User
+import service.telegram.Chat
+import service.telegram.Message
+import service.telegram.User
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.util.*
@@ -11,7 +11,7 @@ import java.util.logging.Logger
 
 val Exception.stackTraceString get() = StringWriter().also { printStackTrace(PrintWriter(it)) }.toString()
 
-fun startApp() {
+suspend fun startApp() {
     while (true) {
         val input = readLine().orEmpty()
         val message = Message(
@@ -25,7 +25,7 @@ fun startApp() {
     }
 }
 
-fun Message.toAppResponse(): String {
+suspend fun Message.toAppResponse(): String {
     return try {
         myApp(this)
     } catch (e: Exception) {

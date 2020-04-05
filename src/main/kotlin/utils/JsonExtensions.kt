@@ -1,8 +1,9 @@
-package com.github.jacklt.gae.ktor.tg.utils
+package utils
 
-import com.google.api.client.http.ByteArrayContent
 import com.google.api.client.http.HttpResponse
 import com.google.api.client.http.HttpResponseException
+import io.ktor.http.ContentType
+import io.ktor.http.content.TextContent
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.json.Json
@@ -13,8 +14,10 @@ val json = Json(JsonConfiguration.Default.copy(ignoreUnknownKeys = true, prettyP
 
 inline fun <T> T.toJson(serializer: SerializationStrategy<T>) = json.stringify(serializer, this)
 
+inline fun <T> String.parse(serializer: DeserializationStrategy<T>) = json.parse(serializer, this)
+
 inline fun <T> T.toJsonContent(serializer: SerializationStrategy<T>) =
-    ByteArrayContent("application/json", json.stringify(serializer, this).toByteArray())
+    TextContent(json.stringify(serializer, this), ContentType.Application.Json)
 
 inline fun <T> T.toJsonPretty(serializer: SerializationStrategy<T>): String = json.stringify(serializer, this)
 

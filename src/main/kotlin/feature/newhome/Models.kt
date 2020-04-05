@@ -1,6 +1,8 @@
-package com.github.jacklt.gae.ktor.tg
+package com.github.omarmiatello.jackldev.feature.newhome
 
-import com.github.jacklt.gae.ktor.tg.appengine.jsoupGet
+import com.github.omarmiatello.jackldev.emojiAnimals
+import com.github.omarmiatello.jackldev.show
+import com.github.omarmiatello.jackldev.utils.jsoupGet
 import kotlinx.serialization.Serializable
 import org.jsoup.select.Elements
 import java.text.NumberFormat
@@ -46,7 +48,7 @@ data class Review(val vote: Int, val commment: String? = null) {
     override fun toString() = if (commment == null) "$vote" else "$vote: $commment"
 }
 
-@Serializable()
+@Serializable
 data class House(
     val site: String,
     val id: String,
@@ -67,7 +69,8 @@ data class House(
     val idDatabase get() = "${site}_${id}"
     val idShort get() = "${if (site == "immobiliare") "imb" else "idl"}${id}"
 
-    val priceFormatted get() = NumberFormat.getCurrencyInstance(Locale.GERMANY).apply { minimumFractionDigits = 0 }.format(price)
+    val priceFormatted
+        get() = NumberFormat.getCurrencyInstance(Locale.GERMANY).apply { minimumFractionDigits = 0 }.format(price)
 
     val surfaceSize: Int
         get() = (details.getOrElse("Superficie") { null } ?: details.values.firstOrNull { " m²" in it })!!
@@ -76,7 +79,8 @@ data class House(
     val surfaceFormatted get() = "${surfaceSize}m²"
 
     val priceMeter2Formatted
-        get() = NumberFormat.getCurrencyInstance(Locale.GERMANY).apply { minimumFractionDigits = 0 }.format(price / surfaceSize) + "/m²"
+        get() = NumberFormat.getCurrencyInstance(Locale.GERMANY).apply { minimumFractionDigits = 0 }
+            .format(price / surfaceSize) + "/m²"
 
     val actionIcon
         get() = when (action) {
@@ -94,7 +98,9 @@ data class House(
 
     fun descShort(reviewsMap: Map<String, Review>? = null, showTags: Boolean = true) =
         """${icons(reviewsMap)} $title $url
-        |$priceFormatted / $surfaceFormatted ($priceMeter2Formatted) /$idShort${show("", tags.takeIf { showTags })}${show(
+        |$priceFormatted / $surfaceFormatted ($priceMeter2Formatted) /$idShort${show(
+            "",
+            tags.takeIf { showTags })}${show(
             "",
             reviewsMap?.showReviewsShort()
         )}
@@ -111,7 +117,10 @@ data class House(
             }
         }}
         |/$idShort
-        |Images: $photos 📷, $video 📹, $planimetry_photos 🗺${show("Tags: ", tags)}${show("Url: ", url)}
+        |Images: $photos 📷, $video 📹, $planimetry_photos 🗺${show(
+            "Tags: ",
+            tags
+        )}${show("Url: ", url)}
         |REVIEWS${show("", reviewsMap.showReviews())}
         |
         |- per votare: scrivi un voto (1-10) e un commento, es: "10 bellissima!"
@@ -128,8 +137,12 @@ data class House(
 
 fun String.parseHouse(): House {
     return when {
-        immUrlRegex.matches(this) -> parseImmobiliare(immUrlRegex.find(this)!!.groupValues[1])
-        ideUrlRegex.matches(this) -> parseIdealista(ideUrlRegex.find(this)!!.groupValues[1])
+        immUrlRegex.matches(this) -> parseImmobiliare(
+            immUrlRegex.find(this)!!.groupValues[1]
+        )
+        ideUrlRegex.matches(this) -> parseIdealista(
+            ideUrlRegex.find(this)!!.groupValues[1]
+        )
         else -> error("Unknown url $this")
     }
 }
@@ -152,8 +165,14 @@ private fun parseImmobiliare(url: String): House {
         site = "immobiliare",
         id = url.takeLastWhile { it.isDigit() },
         action = when {
-            contract.contains("Vendita", ignoreCase = true) -> House.ACTION_BUY
-            contract.contains("Affitto", ignoreCase = true) -> House.ACTION_RENT
+            contract.contains(
+                "Vendita",
+                ignoreCase = true
+            ) -> House.ACTION_BUY
+            contract.contains(
+                "Affitto",
+                ignoreCase = true
+            ) -> House.ACTION_RENT
             else -> House.ACTION_AUCTION
         },
         url = url,

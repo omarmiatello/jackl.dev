@@ -1,10 +1,10 @@
-package com.github.jacklt.gae.ktor.tg.feature.supermarket
+package feature.supermarket
 
-import com.github.jacklt.gae.ktor.tg.config.AppConfig
-import com.github.jacklt.gae.ktor.tg.utils.json
-import com.github.jacklt.gae.ktor.tg.utils.toJsonPretty
+import config.AppConfig
 import io.ktor.http.encodeURLParameter
 import kotlinx.serialization.builtins.list
+import utils.json
+import utils.toJsonPretty
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
@@ -13,7 +13,7 @@ import java.util.logging.Logger
 
 
 object EsselungaClient {
-    private val config = AppConfig.getDefault().esselunga
+    private val config = AppConfig.default.esselunga
     private const val TIMEOUT_MS = 10_000
 
     fun getAvailableSlots(): List<Slot> {

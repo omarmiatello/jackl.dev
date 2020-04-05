@@ -1,4 +1,4 @@
-package com.github.jacklt.gae.ktor.tg.appengine
+package com.github.omarmiatello.jackldev.utils
 
 import com.google.api.client.extensions.appengine.http.UrlFetchTransport
 import com.google.api.client.http.GenericUrl

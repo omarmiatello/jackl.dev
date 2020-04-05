@@ -1,4 +1,4 @@
-package com.github.jacklt.gae.ktor.tg.config
+package config
 
 @DslMarker
 annotation class AppConfigMarker
@@ -21,6 +21,6 @@ abstract class AppConfig(
     )
 
     companion object {
-        fun getDefault(): AppConfig = MyConfig
+        val default: AppConfig get() = MyConfig
     }
 }

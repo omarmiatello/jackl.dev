@@ -1,15 +1,14 @@
-package com.github.jacklt.gae.ktor.tg.feature.home
+package feature.home
 
-import com.github.jacklt.gae.ktor.tg.appengine.FirebaseDatabaseApi
-import com.github.jacklt.gae.ktor.tg.appengine.fireMap
-import feature.home.Product
+import com.github.omarmiatello.jackldev.service.FirebaseDatabaseApi
+import com.github.omarmiatello.jackldev.service.fireMap
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 
 
-object NoExpDB : FirebaseDatabaseApi() {
-    override val basePath = "https://noexp-for-home.firebaseio.com/"
-    override val devRules = true
-
-    var home by fireMap(MapSerializer(String.serializer(), Product.serializer()), useCache = false)
+object NoExpDB : FirebaseDatabaseApi(
+    basePath = "https://noexp-for-home.firebaseio.com/",
+    credentialsFile = "noexp-credentials.json"
+) {
+    var home by fireMap(MapSerializer(String.serializer(), Product.serializer()))
 }

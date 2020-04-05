@@ -1,0 +1,3 @@
+!*.jar
+!/src/main/kotlin/config/MyConfig.kt
+!/src/main/resources/*credentials.json

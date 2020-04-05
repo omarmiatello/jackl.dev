@@ -1,6 +1,6 @@
-package com.github.jacklt.gae.ktor.tg.utils
+package utils
 
-import com.github.jacklt.gae.ktor.tg.appengine.telegram.TelegramApi
+import service.telegram.TelegramApi
 
 
 class TelegramHelper(
@@ -11,11 +11,11 @@ class TelegramHelper(
     var idsMsgSends = emptyList<Int>()
         private set
 
-    fun send(vararg msgs: String) {
+    suspend fun send(vararg msgs: String) {
         var countNew = 0
         msgs.forEach { msg ->
             if (countNew++ < maxNew) {
-                val messageId = TelegramApi.sendMessage(
+                val messageId: Int = TelegramApi.sendMessage(
                     chatId = chatId,
                     text = msg,
                     parseMode = TelegramApi.ParseMode.NONE,
