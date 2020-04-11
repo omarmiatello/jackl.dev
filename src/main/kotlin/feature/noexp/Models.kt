@@ -1,4 +1,4 @@
-package feature.home
+package feature.noexp
 
 import kotlinx.serialization.Serializable
 import utils.formatDays

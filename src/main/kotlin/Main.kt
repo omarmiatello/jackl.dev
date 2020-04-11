@@ -5,7 +5,7 @@ import com.github.omarmiatello.jackldev.feature.newhome.NewHomeDB
 import com.github.omarmiatello.jackldev.feature.newhome.Review
 import com.github.omarmiatello.jackldev.feature.newhome.parseHouse
 import com.github.omarmiatello.jackldev.utils.InMemoryCache
-import feature.home.expireMessage
+import feature.noexp.expireMessage
 import feature.supermarket.EsselungaClient
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer

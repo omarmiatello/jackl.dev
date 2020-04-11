@@ -3,7 +3,7 @@ package com.github.omarmiatello.jackldev
 import com.github.omarmiatello.jackldev.feature.newhome.webhookSpreadsheetNewHome
 import com.github.omarmiatello.jackldev.feature.supermarket.webhookSupermarket
 import com.github.omarmiatello.jackldev.feature.telegram.webhookTelegram
-import feature.home.webhookNoExp
+import feature.noexp.webhookNoExp
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
