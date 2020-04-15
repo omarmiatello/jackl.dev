@@ -11,7 +11,14 @@ data class Product(
     val barcode: String? = null,
     val qr: String? = null,
     val insertDate: Long,
-    val expireDate: Long
+    val expireDate: Long,
+    val max: Int,
+    val min: Int,
+    val desired: Int,
+    val maxPerWeek: Int,
+    val maxPerYear: Int,
+    val tags: String?,
+    val tagsParent: String?
 ) {
     val nameFormatted = listOfNotNull(name, description).joinToString().ifEmpty { barcode }
 
