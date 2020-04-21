@@ -3,13 +3,16 @@
         <h3>Prodotti</h3>
 
         <el-select v-model="categoryFilter" placeholder="Select" filterable clearable>
-            <el-option v-for="item in categories" :key="item.name" :label="item.name" :value="item.name"/>
+            <el-option v-for="item in categoriesVisible" :key="item.category.name" :label="item.category.name"
+                       :value="item.category.name"/>
         </el-select>
 
         <el-container>
             <el-main>
                 <el-tag v-for="tag in pageTags" :key="tag.name" :type="tag.state" size="small"
-                        v-on:click="onSelectTag(tag.name)">{{tag.name}}
+                        v-on:click="onSelectTag(tag.name)">
+                    <el-tag size="mini" :type="tag.state" effect="dark">{{tag.count}}</el-tag>
+                    {{tag.name}}
                 </el-tag>
             </el-main>
         </el-container>
@@ -48,10 +51,22 @@
     class Tag {
         name: string;
         state: string;
+        count: number;
 
-        constructor(name: string, state: string) {
+        constructor(name: string, state: string, count: number) {
             this.name = name;
             this.state = state;
+            this.count = count;
+        }
+    }
+
+    class CategoryCount {
+        category: Category;
+        count: number;
+
+        constructor(category: Category, count: number) {
+            this.category = category;
+            this.count = count;
         }
     }
 
@@ -81,20 +96,17 @@
                 const list: Category[] = this.valuesFrom(response.data);
                 this.categories = list;
             })
-            // axios.get("/categories.json").then(response => {
-            //     console.log(response);
-            //     this.categories = response.data;
-            // })
         }
 
         private findCategory(categoryName: string): Category | undefined {
-            return this.categories.find(c => c.name === categoryName);
+            return this.categoriesVisible.find(c => c.category.name === categoryName)?.category;
         }
 
         private toTags(categories: string[], state: string): Tag[] {
             return categories
-                .map(value => this.categories.find(c => c.name === value)!)
-                .filter(value => value != undefined).map(value => new Tag(value.name, state));
+                .map(value => this.categoriesVisible.find(c => c.category.name === value)!)
+                .filter(value => value != undefined)
+                .map(value => new Tag(value.category.name, state, value.count));
         }
 
         private valuesFrom(map: any) {
@@ -106,22 +118,36 @@
         }
 
         get productsFiltered(): Product[] {
-            if (this.categoryFilter == undefined || this.categoryFilter == "") {
+            if (this.categoryFilter == '') {
                 return this.products
             } else {
                 return this.products.filter(product => {
                     const cat = product.cat || ["Alimenti"]
                     const catParents = product.catParents || []
-                    return cat.find(p => p === this.categoryFilter) != null || catParents.find(p => p === this.categoryFilter) != null
+                    return cat[0] === this.categoryFilter || catParents.find(p => p === this.categoryFilter) != null
                 });
             }
+        }
+
+        get categoriesVisible(): CategoryCount[] {
+            const products = this.products
+            return this.categories
+                .map(category => {
+                    const p = products.filter(product => {
+                        const cat = product.cat || ["Alimenti"]
+                        const catParents = product.catParents || []
+                        return cat[0] === category.name || catParents.find(p => p === category.name) != null
+                    })
+                    return new CategoryCount(category, p.length)
+                })
+                .filter(value => value.count > 0)
         }
 
         get pageTags(): Tag[] {
             const categoryName = this.categoryFilter || '';
             const category = this.findCategory(categoryName);
             if (categoryName == undefined || categoryName == "" || category == undefined) {
-                return this.categories.filter(category => (category.allParents || []).length == 0).map(value => new Tag(value.name, ""));
+                return this.categoriesVisible.filter(c => (c.category.allParents || []).length == 0).map(value => new Tag(value.category.name, "", value.count));
             } else {
                 return this.toTags(category.allParents || [], "info")
                     .concat(this.toTags([category.name], "success"))
@@ -151,7 +177,7 @@
 
         filterTagsByRemove(tags: string[], tagName: string): Tag[] {
             return tags
-                .map((value, index) => new Tag(value, index == 0 ? "" : "info"))
+                .map((value, index) => new Tag(value, index == 0 ? "" : "info", 0))
                 .filter(value => value.name != tagName)
         }
     }
@@ -162,5 +188,10 @@
     .el-tag + .el-tag {
         margin-left: 8px;
         margin-bottom: 8px;
+    }
+
+    .item {
+        margin-top: 10px;
+        margin-right: 40px;
     }
 </style>
