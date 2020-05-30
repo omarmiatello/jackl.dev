@@ -5,5 +5,5 @@ build
 out
 *.jar
 
-/src/main/kotlin/config/MyConfig.kt
-/src/main/resources/*credentials.json
+/backend-kt/src/main/kotlin/config/MyConfig.kt
+/backend-kt/src/main/resources/*credentials.json
