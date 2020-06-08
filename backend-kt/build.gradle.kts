@@ -53,9 +53,9 @@ dependencies {
 
     implementation("com.github.omarmiatello.telegram:client:4.8")
     implementation("com.github.omarmiatello.telegram:dataclass:4.8")
-    implementation("com.github.omarmiatello.noexp:dataclass:0.2.6")
-    implementation("com.github.omarmiatello.noexp:categories-parser:0.2.6")
-    implementation("com.github.omarmiatello.noexp:app:0.2.6")
+    implementation("com.github.omarmiatello.noexp:dataclass:0.2.9")
+    implementation("com.github.omarmiatello.noexp:categories-parser:0.2.9")
+    implementation("com.github.omarmiatello.noexp:app:0.2.9")
 
     implementation("ch.qos.logback:logback-classic:$logback_version")
     implementation("com.google.firebase:firebase-admin:6.8.1")
