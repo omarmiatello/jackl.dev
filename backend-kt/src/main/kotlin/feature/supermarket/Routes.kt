@@ -13,7 +13,7 @@ fun Route.webhookSupermarket() {
         val availableSlots = EsselungaClient.getAvailableSlots()
         val msg = buildString {
             if (availableSlots.isNotEmpty()) {
-                appendln("${availableSlots.size} slot disponibili:")
+                appendLine("${availableSlots.size} slot disponibili:")
                 append(availableSlots.joinToString("\n"))
             } else {
                 append("Nessuno slot disponibile")

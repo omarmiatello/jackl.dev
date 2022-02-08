@@ -1,5 +1,7 @@
 package com.github.omarmiatello.jackldev
 
+import com.github.omarmiatello.jackldev.config.AppConfig
+import com.github.omarmiatello.jackldev.config.MyConfig
 import com.github.omarmiatello.jackldev.feature.newhome.webhookSpreadsheetNewHome
 import com.github.omarmiatello.jackldev.feature.supermarket.webhookSupermarket
 import com.github.omarmiatello.jackldev.feature.telegram.webhookTelegram
@@ -18,37 +20,19 @@ import io.ktor.routing.get
 import io.ktor.routing.route
 import io.ktor.routing.routing
 import io.ktor.serialization.json
+import io.ktor.server.cio.*
+import io.ktor.server.engine.*
 import kotlinx.html.body
 import kotlinx.html.h1
+import kotlinx.serialization.json.Json
 
-fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
-
-@Suppress("unused") // Referenced in application.conf
-@kotlin.jvm.JvmOverloads
 fun Application.module() {
-
-    // This adds automatically Date and Server headers to each response, and would allow you to configure
-    // additional headers served to each response.
-    install(DefaultHeaders) {
-        header("X-Engine", "Ktor") // will send this header with each response
-    }
-
-    install(ContentNegotiation) {
-        json()
-    }
-
-    // This uses use the logger to log every call (request/response)
+    install(DefaultHeaders) { header("X-Engine", "Ktor") }
+    install(ContentNegotiation) { json() }
     install(CallLogging)
-
     install(StatusPages)
 
-    // Registers routes
     routing {
-        // For the root / route, we respond with an Html.
-        // The `respondHtml` extension method is available at the `ktor-html-builder` artifact.
-        // It provides a DSL for building HTML to a Writer, potentially in a chunked way.
-        // More information about this DSL: https://github.com/Kotlin/kotlinx.html
-
         get("/") { call.respondHtml { body { h1 { +"${emojiAnimals.random()} + ${emojiAnimals.random()} = ${emojiAnimals.random()}" } } } }
         route("webhook") {
             route("telegram") { webhookTelegram() }
@@ -60,5 +44,12 @@ fun Application.module() {
     }
 }
 
-class AuthenticationException : RuntimeException()
-class AuthorizationException : RuntimeException()
+fun main() {
+    println(Json {  }.encodeToString(AppConfig.serializer(), MyConfig))
+    embeddedServer(
+        factory = CIO,
+        port = System.getenv("PORT")?.toInt() ?: 8080,
+        watchPaths = listOf("build"),
+        module = Application::module,
+    ).start(wait = true)
+}

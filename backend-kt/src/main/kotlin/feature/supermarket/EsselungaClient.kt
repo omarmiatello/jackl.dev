@@ -2,9 +2,9 @@ package com.github.omarmiatello.jackldev.feature.supermarket
 
 import com.github.omarmiatello.jackldev.config.AppConfig
 import io.ktor.http.encodeURLParameter
-import kotlinx.serialization.builtins.list
 import com.github.omarmiatello.jackldev.utils.json
 import com.github.omarmiatello.jackldev.utils.toJsonPretty
+import kotlinx.serialization.builtins.ListSerializer
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
@@ -28,7 +28,7 @@ object EsselungaClient {
                     }
                 val body = String(call.inputStream.readBytes())
                 try {
-                    json.parse(
+                    json.decodeFromString(
                         SlotResponse.serializer(),
                         body
                     )
@@ -39,7 +39,7 @@ object EsselungaClient {
         response ?: return emptyList()
         log(
             response.slots.toJsonPretty(
-                Slot.serializer().list
+                ListSerializer(Slot.serializer())
             )
         )
         return response.slots.filter { it.status != "DISABLED" && it.viewStatus != "ESAURITA" }

@@ -11,9 +11,11 @@ import com.github.omarmiatello.jackldev.feature.supermarket.EsselungaClient
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.json.content
 import com.github.omarmiatello.jackldev.utils.TelegramHelper
 import com.github.omarmiatello.jackldev.utils.json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import java.util.*
 import java.util.logging.Level
 import java.util.logging.Logger
 
@@ -30,41 +32,42 @@ suspend fun myApp(message: Message): String {
     val userInput = message.text.orEmpty()
     val houseId = InMemoryCache[message.userName]
     InMemoryCache.delete(message.userName)
+    val input = userInput.lowercase()
     return when {
-        "cas[ae] \\d+".toRegex().matches(userInput.toLowerCase()) -> {
-            val max: Int = "cas[ae] (\\d+)".toRegex().matchEntire(userInput.toLowerCase())!!.groupValues[1].toInt()
+        "cas[ae] \\d+".toRegex().matches(input) -> {
+            val max: Int = "cas[ae] (\\d+)".toRegex().matchEntire(input)!!.groupValues[1].toInt()
             val msgs =
                 getHousesWithReviewsStrings { it.first.action == House.ACTION_BUY && it.first.price <= max * 1000 }
             sendTelegram(message.chat.id.toString(), msgs.dropLast(1))
             if (msgs.isEmpty()) "Non ci sono case" else msgs.last()
         }
-        userInput.toLowerCase() in listOf("casa", "case", "buy", "compra", "🏠", "🏡", "🏘", "🏚") -> {
+        input in listOf("casa", "case", "buy", "compra", "🏠", "🏡", "🏘", "🏚") -> {
             val msgs = getHousesWithReviewsStrings { it.first.action == House.ACTION_BUY }
             sendTelegram(message.chat.id.toString(), msgs.dropLast(1))
             if (msgs.isEmpty()) "Non ci sono case" else msgs.last()
         }
-        userInput.toLowerCase() in listOf("affitto", "affitti", "affitta", "rent", "🛏") -> {
+        input in listOf("affitto", "affitti", "affitta", "rent", "🛏") -> {
             val msgs = getHousesWithReviewsStrings { it.first.action == House.ACTION_RENT }
             sendTelegram(message.chat.id.toString(), msgs.dropLast(1))
             if (msgs.isEmpty()) "Non ci sono affitti" else msgs.last()
         }
-        userInput.toLowerCase() in listOf("asta", "aste", "auction", "bid", "📢") -> {
+        input in listOf("asta", "aste", "auction", "bid", "📢") -> {
             val msgs = getHousesWithReviewsStrings { it.first.action == House.ACTION_AUCTION }
             sendTelegram(message.chat.id.toString(), msgs.dropLast(1))
             if (msgs.isEmpty()) "Non ci sono aste" else msgs.last()
         }
-        userInput.toLowerCase() in listOf("voto", "vota", "votare") -> {
+        input in listOf("voto", "vota", "votare") -> {
             val msgs = getHousesWithReviewsStrings { message.userName !in it.second.keys }
             sendTelegram(message.chat.id.toString(), msgs.dropLast(1))
             if (msgs.isEmpty()) "Hai votato tutto! 🎉" else msgs.last()
         }
-        userInput.toLowerCase() in listOf("ss", "spreadsheet", "docs", "doc") -> {
+        input in listOf("ss", "spreadsheet", "docs", "doc") -> {
             "https://docs.google.com/spreadsheets/d/10VolNdRjvS376p0AsYu3VIFdpnN3bNbeYe02ulX6du4/edit?usp=sharing"
         }
-        userInput.toLowerCase() in listOf("expire", "exp") -> {
+        input in listOf("expire", "exp") -> {
             expireMessage()
         }
-        userInput.toLowerCase() in listOf("esselunga", "s") -> {
+        input in listOf("esselunga", "s") -> {
             val availableSlots = EsselungaClient.getAvailableSlots()
             if (availableSlots.isNotEmpty()) "${availableSlots.size} slot disponibili: $availableSlots" else "Nessuno slot disponibile"
         }
@@ -135,7 +138,7 @@ private fun searchAndSaveHouses(message: Message): String {
     val userInput = message.text.orEmpty()
     val urls = message.entities
         ?.filter { it.type == "url" }
-        ?.map { userInput.substring(it.offset, it.offset + it.length) }
+        ?.map { userInput.substring(it.offset.toInt(), it.offset.toInt() + it.length.toInt()) }
         .orEmpty()
 
     val errors = mutableListOf<String>()
@@ -183,20 +186,20 @@ fun getFullJson(predicate: (Pair<House, Map<String, Review>>) -> Boolean): Strin
     }.distinct().map { it to "" }.toMap()
 
     val results = sortedList.map { (house, votes) ->
-        val houseJsonObj = json.toJson(House.serializer(), house).jsonObject
+        val houseJsonObj = json.encodeToJsonElement(House.serializer(), house).jsonObject
         val details = houseJsonObj["details"]?.jsonObject.orEmpty()
         val icons = mapOf("🔥" to house.icons(votes))
         val votesMap = votes.map { it.key to it.value.toString() }.toMap()
         val detailsMap = if (details.containsKey("d0")) {
-            mapOf("details" to details.values.joinToString { it.content })
+            mapOf("details" to details.values.joinToString { it.jsonPrimitive.content })
         } else {
-            details.mapValues { it.value.content }
+            details.mapValues { it.value.jsonPrimitive.content }
         }
-        val objectMap = (houseJsonObj - "details").mapValues { it.value.content }
+        val objectMap = (houseJsonObj - "details").mapValues { it.value.jsonPrimitive.content }
 
         icons + nickEmptyMap + detailsEmptyMap + votesMap + detailsMap + objectMap
     }.toList()
-    return json.stringify(ListSerializer(MapSerializer(String.serializer(), String.serializer())), results)
+    return json.encodeToString(ListSerializer(MapSerializer(String.serializer(), String.serializer())), results)
 }
 
 // Houses utils

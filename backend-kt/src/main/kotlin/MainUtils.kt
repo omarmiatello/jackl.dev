@@ -15,7 +15,7 @@ suspend fun startApp() {
         val message = Message(
             message_id = 0,
             from = User(0, false, "me"),
-            date = Date().time.toInt(),
+            date = Date().time,
             chat = Chat(0, "local_chat"),
             text = input
         ).toAppResponse()

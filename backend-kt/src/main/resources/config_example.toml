@@ -1,0 +1,11 @@
+[telegram]
+# https://api.telegram.org/botTOKENsetWebhook?url=https://example.com/webhook/telegram
+# https://api.telegram.org/botTOKEN/deleteWebhook
+apiKey = "a"
+
+[esselunga]
+username = "a"
+password = "a"
+
+[extra]
+key = "value"

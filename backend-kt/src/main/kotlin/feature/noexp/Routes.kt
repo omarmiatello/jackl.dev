@@ -12,6 +12,7 @@ import io.ktor.routing.post
 import com.github.omarmiatello.jackldev.service.telegram.telegramApi
 import com.github.omarmiatello.jackldev.utils.json
 import com.github.omarmiatello.noexp.*
+import com.github.omarmiatello.noexp.utils.extractCategories
 import io.ktor.http.HttpStatusCode
 import io.ktor.response.respond
 import kotlinx.serialization.builtins.ListSerializer
@@ -29,8 +30,8 @@ fun Route.webhookNoExp() {
         val categories = name.extractCategories(allCategories, allCategories.first())
         call.respondText(
             productDao.copy(
-                cat = categories.toCatNames(),
-                catParents = categories.toCatParentsNames()
+                cat = categories.map { it.name },
+                catParents = categories.map { it.allParents.joinToString() },
             ).toJson(),
             ContentType.Application.Json
         )
