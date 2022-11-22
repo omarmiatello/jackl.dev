@@ -15,7 +15,7 @@
     "@nuxtjs/axios": "^5.3.6",
     "@nuxtjs/pwa": "^3.0.0-0",
     "element-ui": "^2.4.11",
-    "nuxt": "^2.0.0",
+    "nuxt": "^2.15.8",
     "nuxt-typed-vuex": "^0.1.18",
     "vuex-module-decorators": "^0.17.0"
   },
